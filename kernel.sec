@@ -2,9 +2,8 @@ type=Options
 joincfset=kernel-rules
 procallin=no
 
-type=SingleWithSuppress
+type=Single
 ptype=RegExp
 pattern=(?<server>\w+) kernel: \[\S+\] Out of memory: Kill process \d+ (?<process>\S+)
 desc=$+{server} | $+{process} | Host out of memory, process killed by kernel
 action=logonly; event SERVER_OOM_$+{server}
-window=900
