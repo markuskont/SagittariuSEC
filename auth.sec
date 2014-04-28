@@ -1,0 +1,80 @@
+# IP attempts to log in faster than humanly possible
+# Pretty much safe to block that IP
+
+type=SingleWithThreshold
+ptype=RegExp
+pattern=\S*AUTH_FAILURE_(?<server>[\w-]+)_(?<remote_IP>\S+)_\w+
+continue=TakeNext
+desc=$+{remote_IP} | $+{server} | Burst authentication attack
+action=logonly; event ATTACK_FROM_$+{remote_IP}
+thresh=5
+window=5
+
+# Same IP address fails multiple times in relatiely short timespan
+# SUspicious but do not block yet
+
+type=SingleWithThreshold
+ptype=RegExp
+pattern=\S*AUTH_FAILURE_(?<server>[\w-]+)_(?<remote_IP>\S+)_\w+
+continue=TakeNext
+desc=$+{remote_IP} | $+{server} | Multiple authentication failures
+action=logonly; event AUTH_MULTIPLE_FAILURES_$+{server}_$+{remote_IP}
+thresh=3
+window=30
+
+# Single IP fails to log in with multiple unique usernames
+# Pretty much safe to block that IP
+
+type=EventGroup
+init=create USER_COUNTING_$+{remote_IP}
+end=delete USER_COUNTING_$+{remote_IP}
+ptype=RegExp
+pattern=\S*AUTH_FAILURE_(?<server>[\w-]+)_(?<remote_IP>\S+)_(?<username>\w+)
+continue=TakeNext
+context=!COUNTED_$+{server}_$+{remote_IP}_$+{username}
+count=alias USER_COUNTING_$+{remote_IP} COUNTED_$+{server}_$+{remote_IP}_$+{username}
+desc=$+{remote_IP} | $+{server} | Authentication failures from single IP with 5 distinct usernames
+action=logonly; event ATTACK_FROM_$+{remote_IP}
+window=900
+thresh=5
+
+# Single IP fails to log in to multiple unique services
+# Pretty much safe to block that IP
+
+type=EventGroup
+init=create USER_COUNTING_$+{remote_IP}_$+{program}
+end=delete USER_COUNTING_$+{remote_IP}_$+{program}
+ptype=RegExp
+pattern=(?<program>\S+)_AUTH_FAILURE_(?<server>[\w-]+)_(?<remote_IP>\S+)_\S+
+continue=TakeNext
+context=!COUNTED_$+{remote_IP}_$+{program}
+count=alias USER_COUNTING_$+{remote_IP}_$+{program} COUNTED_$+{remote_IP}_$+{program}
+desc=$+{remote_IP}| $+{server} | Authentication failures from single IP to 3 distinct services
+action=logonly; event ATTACK_FROM_$+{remote_IP}
+window=300
+thresh=3
+
+# Handle repeated AUTH_MULTIPLE_FAILURES from single IP
+# Long timespan, currently 1 day
+
+type=SingleWithThreshold
+ptype=RegExp
+pattern=AUTH_MULTIPLE_FAILURES_(?<server>[\w-]+)_(?<remote_IP>\S+)
+continue=TakeNext
+desc=$+{remote_IP} | $+{server} | Multiple authentication failures from IP, repeat offender
+action=logonly; event ATTACK_FROM_$+{remote_IP}
+thresh=10
+window=86400
+
+# Lateral SSHD scan from botnet node
+# Pretty harmless but identifies malicious hosts and botnet nodes
+# Extracted IP can later be used for cross-correlation with other events
+# This can be done with EventGroup to count unique accessed hosts, but that is kind of overkill
+
+type=SingleWithThreshold
+ptype=RegExp
+pattern=\S*CONN_AUTH_FAILURE_\S+_(?<remote_IP>\S+)
+desc=$+{remote_IP} | Remote host attempts to access restricted ports, potentially on multiple servers
+action=logonly; event AUTH_CONN_FAILRES_$+{remote_IP}
+thresh=5
+window=30

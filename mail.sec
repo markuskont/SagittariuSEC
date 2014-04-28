@@ -1,0 +1,28 @@
+type=Options
+joincfset=mail-rules
+procallin=no
+
+# Apr 22 10:17:45 spinmail dovecot: deliver(anu.kalm@eaa.ee): sieve: msgid=<3956204CFEBF433FBC69E5BE2C8DE4F8@ElinPC>: failed to store into mailbox 'INBOX': Quota exceeded (mailbox for user is full)
+
+type=SingleWithSuppress
+ptype=RegExp
+pattern=(?<server>[\w-]+) dovecot: deliver\((\S+)\).+?(?:\(mailbox for user is full\))
+desc=$1 | $2 | Mailbox full
+action=logonly; pipe '%s' mail -s '[SEC] Mailbox full' -r sagittarius@spin.ee admin@spin.ee
+window=43200
+
+# dovecot pop3 and imap failures
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) dovecot: (?: pop3-login|imap-login): .*(?:Authentication failure|Aborted login \(auth failed|Aborted login \(tried to use disabled|Disconnected \(auth failed|Aborted login \(\d+ authentication attempts).*user=<(?<username>\S+)>.*rip=(?<remote_IP>(?:\d{1,3}\.){3}\d{1,3})
+desc=$+{server} | $+{remote_IP} | Dovecot authentication failure
+action=logonly; event DOVECOT_AUTH_FAILURE_$+{server}_$+{remote_IP}_$+{username}
+
+# Roundcube auth failures
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) Roundcube:.+ FAILED login for (?<username>\S+) from (?<remote_IP>\S+)
+desc=$+{server} | $+{remote_IP} | Roundcube authentication failure
+action=logonly; event ROUNDCUBE_AUTH_FAILURE_$+{server}_$+{remote_IP}_$+{username}

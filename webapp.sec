@@ -1,0 +1,41 @@
+# Simple threshold to detect script kiddies
+# Set threshold hight since scanners generate records like mud
+
+type=SingleWithThreshold
+continue=TakeNext
+ptype=RegExp
+pattern=\S*INJECTION_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)
+desc=$+{remote_IP} | $+{server} |  Burst web application attack
+action=logonly; event ATTACK_FROM_$+{remote_IP}
+thresh=20
+window=10
+
+# Single IP attempts 3 distinct injection types in 5 minute timeframe
+# Might catch manual hacking attempts
+
+type=EventGroup
+init=create USER_COUNTING_$+{remote_IP}
+end=delete USER_COUNTING_$+{remote_IP}
+continue=TakeNext
+ptype=RegExp
+pattern=(?<inject_type>[\w-]+)_INJECTION_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)
+context=!COUNTED_$+{vhost}_$+{remote_IP}_$+{inject_type}
+count=alias USER_COUNTING_$+{remote_IP} COUNTED_$+{vhost}_$+{remote_IP}_$+{inject_type}
+desc=$+{remote_IP} | $+{vhost} | Multiple web application injections from single IP 
+action=logonly; event ATTACK_POSSIBLY_FROM_$+{remote_IP}
+window=300
+thresh=3
+
+# Cross-correlate web application injections and arbitary authentication failures
+
+type=EventGroup2
+continue=TakeNext
+ptype=RegExp
+pattern=\S*INJECTION_WEBAPP_(?<server>[\w-]+)_(?<remote_IP>\S+)_\S*
+thresh=15
+ptype2=RegExp
+pattern2=\S*AUTH_FAILURE_(?<server>[\w-]+)_(?<remote_IP>\S+)_\w
+thresh2=5
+desc=$+{remote_IP} | $+{server} | Combined authentication and web application attacks
+action=logonly; event ATTACK_FROM_$+{remote_IP}
+window=60

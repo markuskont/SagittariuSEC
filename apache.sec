@@ -1,0 +1,110 @@
+type=Options
+joincfset=apache-rules
+procallin=no
+
+############# Injection attempts
+
+# OS command injection
+
+# Path traversal
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?:(?i:\.|\%2e){2,}(?:(?i:/|\\|\%2f|%c0%af)+))+
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: directory traversal
+action=logonly; event OSCOMMAND_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# /etc/passwd inclusion attempt
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?:etc\/\W*passwd)
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: etc/passwd inclusion
+action=logonly; event OSCOMMAND_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# Code injection
+
+# Simple script tags
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?i:(?i:<|%3c)/?script(?i:>|%3e))
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: script tags
+action=logonly; event CODE_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# Javascript injection
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?:javascript\:)
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: javascript
+action=logonly; event CODE_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# SQL injection
+
+# SELECT * FROM
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?i:SELECT%\S*from)
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: SQL SELECT FROM statement
+action=logonly; event SQL_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# UNION SELECT
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?i:union\S*select)
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: SQL UNION SELECT statement
+action=logonly; event SQL_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# Blind sqli testing with sleep() and benchmark()
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?i:(sleep\((\s*)(\d*)(\s*)\)|benchmark\((.*)\,(.*)\)))
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: Blind SQLi testing with sleep() or benchmark()
+action=logonly; event SQL_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# Comment injection
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?:\<!-|--\>|\/\*|\*\/)
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: common comment types
+action=logonly; event COMMENT_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# NULL byte injection
+# %00
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+%00
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: null byte
+action=logonly; event BYTE_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+# PHPIDS
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?:(@import|;base64|alert[\s]?\(|expression[\s]?\(|urn[\s]?\(|fromCharcode[\s]?\(|decodeURIComponent[\s]?\(|eval[\s]?\(|Execute[\s]?\())
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: imported poisoned stylesheets, base64 attacks, vbscript probings and typical js injections
+action=logonly; event CODE_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+#######################################################################################
+# known exploit patterns
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+//myadtoolz.net
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp exploit
+action=logonly; event EXPLOIT_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+cgi-bin.+((?:%\w{2})\+?)+ HTTP
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp exploit: cgi-bin
+action=logonly; event CGIBIN_EXPLOIT_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+/\w+/(?:zologize|scripts)/\w+\.php
+desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp exploit: myadmin
+action=logonly; event MYADMIN_EXPLOIT_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
+
+###########################
+# Strange user agent

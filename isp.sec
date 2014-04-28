@@ -1,0 +1,11 @@
+type=Options
+joincfset=isp-rules
+procallin=no
+
+# Apr 15 14:05:28 isp ISPConfig: Failed login for user 'ispesbl' from 88.196.63.209 at 2013-09-13 09:45:26
+
+type=Single
+ptype=RegExp
+pattern=(?<server>[\w-]+) ISPConfig: Failed login for user '(?<username>\S+)' from (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3})
+desc=$+{server} | $+{remote_IP} | ISCPonfig authentication failure
+action=logonly; event ISPConfig_AUTH_FAILURE_$+{server}_$+{remote_IP}_$+{username}
