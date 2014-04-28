@@ -2,8 +2,6 @@ type=Options
 joincfset=mail-rules
 procallin=no
 
-# Apr 22 10:17:45 spinmail dovecot: deliver(anu.kalm@eaa.ee): sieve: msgid=<3956204CFEBF433FBC69E5BE2C8DE4F8@ElinPC>: failed to store into mailbox 'INBOX': Quota exceeded (mailbox for user is full)
-
 type=SingleWithSuppress
 ptype=RegExp
 pattern=(?<server>[\w-]+) dovecot: deliver\((\S+)\).+?(?:\(mailbox for user is full\))
