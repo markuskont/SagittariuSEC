@@ -2,9 +2,6 @@ type=Options
 joincfset=ftp-rules
 procallin=no
 
-# logonly is not at this level
-# currently serves as debug
-
 type=Single
 ptype=RegExp
 pattern=(?<server>\w+) pure-ftpd: \(\?@(?<remote_IP>\S+)\)\s+\[WARNING\] Authentication failed for user \[(?<username>\S*)\]
