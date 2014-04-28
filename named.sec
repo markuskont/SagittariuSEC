@@ -2,14 +2,6 @@ type=Options
 joincfset=named-rules
 procallin=no
 
-# Not yet integrated to rest of the ruleset
-# These rules were needed in production ASAP
-
-type=Suppress
-ptype=RegExp
-pattern=(?:195\.222\.3\.250|192\.168\.66\.\d{1,3}|80\.235\.77\.)
-desc=Suppress known good IP ranges
-
 # DNS Amplification DDoS attack
 # TODO: forward to iptables script
 # Do not block IP, only limit packet rate to port 53
