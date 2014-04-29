@@ -12,11 +12,11 @@ ptype=RegExp
 continue=TakeNext
 pattern=ATTACK_FROM_(?<remote_IP>\S+)
 desc=$+{remote_IP} | Generic attack: IP added to ban list
-action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (su - sec -c "echo testing123")
+action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables.sh $1 ")
 window=60
 thresh=1
 desc2=$+{remote_IP} | Generic attack: IP removed from ban list
-action2=logonly; shellcmd (su - sec -c "echo testing456")
+action2=logonly; (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables_remove.sh $1")
 window2=60
 thresh2=0
 
@@ -31,11 +31,11 @@ ptype=RegExp
 continue=TakeNext
 pattern=DNS_AMP_ATTACK_(?<remote_IP>\S+)
 desc=$+{remote_IP} | DNS amp attack: IP added to ban list
-action=logonly; shellcmd (su - sec -c "ssh root@ns3.keskus.sise 'bash -s' -- < /opt/scripts/iptables.sh $1 ")
+action=logonly; shellcmd (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables.sh $1 ")
 window=5
 thresh=10
 desc2=$+{remote_IP} | DNS amp attack: IP removed from ban list
-action2=logonly; shellcmd (su - sec -c "ssh root@ns3.keskus.sise 'bash -s' -- < /opt/scripts/iptables_remove.sh $1")
+action2=logonly; shellcmd (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables_remove.sh $1")
 window2=900
 thresh2=0
 
@@ -45,6 +45,6 @@ type=SingleWithThreshold
 ptypeRegExp
 pattern=IP_BLOCKED_(?<remote_IP>\S+)
 desc=$+{remote_IP} | Repeated offender permanently blocked
-action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (su - sec -c "echo testing789")
+action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables.sh $1 ")
 window=604800
 thresh=10

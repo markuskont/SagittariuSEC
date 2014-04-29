@@ -60,11 +60,10 @@ thresh=3
 type=SingleWithThreshold
 ptype=RegExp
 pattern=AUTH_MULTIPLE_FAILURES_(?<server>[\w-]+)_(?<remote_IP>\S+)
-continue=TakeNext
 desc=$+{remote_IP} | $+{server} | Multiple authentication failures from IP, repeat offender
 action=logonly; event ATTACK_FROM_$+{remote_IP}
-thresh=10
-window=86400
+thresh=5
+window=300
 
 # Lateral SSHD scan from botnet node
 # Pretty harmless but identifies malicious hosts and botnet nodes
