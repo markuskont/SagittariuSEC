@@ -15,8 +15,8 @@ block_ip () {
     ACTION='DROP'
     IP=$1
 
-    validate_chain $CHAIN_IP || die "No iptables chain $CHAIN_IP"
-    validate_chain $CHAIN_DROP || create_chain $CHAIN_DROP || die "Failed to create $CHAIN_DROP"
+    validate_chain $CHAIN_IP || die "No iptables initial chain $CHAIN_IP"
+    validate_chain $CHAIN_DROP || create_chain $CHAIN_DROP $CHAIN_IP || die "Failed to create $CHAIN_DROP"
 
     echo "Add iptables rules for $1"
 
