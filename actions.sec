@@ -39,7 +39,7 @@ action2=logonly; shellcmd (su - sec -c "ssh root@ns3.keskus.sise 'bash -s' -- < 
 window2=900
 thresh2=0
 
-# Fool me once shame on you, fool me 10 times in single week then fuck off
+# Fool me once shame on you, fool me 10 times in a single week...
 
 type=SingleWithThreshold
 ptypeRegExp

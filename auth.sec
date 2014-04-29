@@ -26,13 +26,13 @@ window=30
 # Pretty much safe to block that IP
 
 type=EventGroup
-init=create USER_COUNTING_$+{remote_IP}
-end=delete USER_COUNTING_$+{remote_IP}
+init=create USER_COUNTING_$+{remote_IP}_$+{server}
+end=delete USER_COUNTING_$+{remote_IP}_$+{server}
 ptype=RegExp
 pattern=\S*AUTH_FAILURE_(?<server>[\w-]+)_(?<remote_IP>\S+)_(?<username>\w+)
 continue=TakeNext
-context=!COUNTED_$+{server}_$+{remote_IP}_$+{username}
-count=alias USER_COUNTING_$+{remote_IP} COUNTED_$+{server}_$+{remote_IP}_$+{username}
+context=!COUNTED_$+{remote_IP}_$+{server}_$+{username}
+count=alias USER_COUNTING_$+{remote_IP}_$+{server} COUNTED_$+{remote_IP}_$+{server}_$+{username}
 desc=$+{remote_IP} | $+{server} | Authentication failures from single IP with 5 distinct usernames
 action=logonly; event ATTACK_FROM_$+{remote_IP}
 window=900
@@ -42,13 +42,13 @@ thresh=5
 # Pretty much safe to block that IP
 
 type=EventGroup
-init=create USER_COUNTING_$+{remote_IP}_$+{program}
-end=delete USER_COUNTING_$+{remote_IP}_$+{program}
+init=create USER_COUNTING_$+{remote_IP}_$+{server}
+end=delete USER_COUNTING_$+{remote_IP}_$+{server}
 ptype=RegExp
 pattern=(?<program>\S+)_AUTH_FAILURE_(?<server>[\w-]+)_(?<remote_IP>\S+)_\S+
 continue=TakeNext
-context=!COUNTED_$+{remote_IP}_$+{program}
-count=alias USER_COUNTING_$+{remote_IP}_$+{program} COUNTED_$+{remote_IP}_$+{program}
+context=!COUNTED_$+{remote_IP}_$+{server}_$+{program}
+count=alias USER_COUNTING_$+{remote_IP}_$+{server} COUNTED_$+{remote_IP}_$+{server}_$+{program}
 desc=$+{remote_IP}| $+{server} | Authentication failures from single IP to 3 distinct services
 action=logonly; event ATTACK_FROM_$+{remote_IP}
 window=300
