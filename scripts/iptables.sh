@@ -7,24 +7,6 @@ die () {
 
 }
 
-validate_ip () {
-
-    OPERATOR=$1
-    REGEX='^([0-9]{1,3}\.){3}[0-9]{1,3}$';
-
-    if ! [[ $OPERATOR =~ $REGEX ]]
-    then
-
-        echo 'Input does not conform to IPv4 address standard'
-
-    else
-
-        block_ip $OPERATOR || die "Failed to block IP ($OPERATOR)"
-
-    fi
-
-}
-
 block_ip () {
 
     IPTABLES=`which iptables`
@@ -69,5 +51,5 @@ create_chain () {
 
 for ARG in "$@"
 do
-        validate_ip $ARG
+        block_ip $ARG
 done
