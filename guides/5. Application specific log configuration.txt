@@ -1,0 +1,327 @@
+This guide assumes that operational syslog server on Ubuntu Server 12.04 LTS virtual machine with working network connection is installed and accessible via SSH. Basic understanding of vim command is assumed but configuration can be carried out with other editors as well. Functional custom CA setup is required with make_cert.sh script. Syslog server must be operational. Commands must be carried out as root user, execution via sudo is possible but untested. Relevant entries must be appended to presented configuration files or, if already present, altered according to temlates within this guide. Relevant services must be restarted for changes to take effect.
+
+1. BIND9
+
+# On name server, edit nameserver configuration file
+# Example is written from OpenSUSE perspective
+# On ubuntu named.conf.local should be used
+
+vim /etc/named.conf
+
+"""
+...
+logging {
+        category xfer-in { log_syslog; };
+        category xfer-out { log_syslog; };
+        category default { log_syslog; };
+
+        category queries {log_syslog;};
+        category lame-servers { null;};
+        category edns-disabled { null; };
+
+        channel log_syslog {
+                syslog daemon;
+                print-category yes;
+                print-severity yes;
+                print-time no;
+        };
+
+        channel log_file { file "/var/log/named.log" versions 5 size 50M; };
+};
+...
+"""
+
+2. OpenWebMail
+
+# Authentication is stored to single log file
+# Syslog file input module is used to poll that file periodically
+# Rsyslog version
+# NOTE! stat-file must be unique for each collected log
+
+vim /etc/rsyslog.d/openwebmail.conf
+
+"""
+$ModLoad imfile
+
+$InputFileName /var/log/openwebmail.log
+$InputFileTag OpenWebMail:
+$InputFileStateFile openwebmail-stat
+
+$InputFileSeverity info
+$InputFileFacility mail
+$InputRunFileMonitor
+"""
+
+3. Roundcube
+
+# Rsyslog version
+# NOTE! stat-file must be unique for each collected log
+
+vim /etc/rsyslog.d/roundcube.conf
+
+"""
+$ModLoad imfile
+
+$InputFileName /var/log/roundcube/userlogins
+$InputFileTag Roundcube:
+$InputFileStateFile roundcube-userlogins-stat
+
+$InputFileSeverity info
+$InputFileFacility mail
+$InputRunFileMonitor
+
+$InputFileName /var/log/roundcube/errors
+$InputFileTag Roundcube:
+$InputFileStateFile roundcube-errors-stat
+
+$InputFileSeverity err
+$InputFileFacility mail
+$InputRunFileMonitor
+"""
+
+4. ISPConfig3
+
+# Rsyslog version
+# NOTE! stat-file must be unique for each collected log
+
+vim /etc/rsyslog.d/ispconfig.conf
+
+"""
+$ModLoad imfile
+
+$InputFileName /var/log/ispconfig/auth.log
+$InputFileTag ISPConfig:
+$InputFileStateFile ispconfig-auth-stat
+
+$InputFileSeverity info
+$InputFileFacility daemon
+$InputRunFileMonitor
+"""
+
+5. Apache2
+
+# Log file paths are examples and should be modified in real use scenario
+# Vhost configuration on Ubuntu
+
+vim /etc/apache2/sites-enabled/site.ex
+
+# From
+
+"""
+...
+CustomLog /srv/www/virtual/site.ex/log/access_log combined
+...
+"""
+
+# To
+
+"""
+...
+CustomLog /srv/www/virtual/site.ex/log/access_log vhost_combined
+...
+"""
+
+# Apache2 configuration on OpenSUSE
+
+vim /etc/sysconfig/apache2
+
+# From
+
+"""
+...
+APACHE_ACCESS_LOG="/var/log/apache2/access_log combined"
+...
+"""
+
+# To
+
+"""
+...
+APACHE_ACCESS_LOG="/var/log/apache2/access_log vhost_combined"
+...
+"""
+
+5.1. Log collection via syslog daemon input file module
+
+# NOTE! stat-file must be unique for each collected log
+
+vim /etc/rsyslog.d/apache2.conf
+
+"""
+$ModLoad imfile
+
+$InputFileName /var/log/apache2/access_log
+$InputFileTag apache:
+$InputFileStateFile apache-access-stat
+
+$InputFileSeverity notice
+$InputFileFacility local6
+$InputRunFileMonitor
+"""
+
+5.2. Error log collection via apache2 directive
+
+# Log file paths are examples and should be modified in real use scenario
+# Vhost configuration on Ubuntu
+# Note, this approach should not be used in conjunction with texf file output as anomalies might occur - warnings will not be sent to syslog
+
+vim /etc/apache2/sites-enabled/site.ex
+
+# From
+
+"""
+...
+ErrorLog /srv/www/virtual/site.ex/log/error_log
+...
+"""
+
+# To
+
+"""
+...
+ErrorLog "syslog:local6"
+...
+"""
+
+5.3. Log collection via Logger
+
+# Log file paths are examples and should be modified in real use scenario
+# Vhost configuration on Ubuntu
+# Logs will be written to local disk and syslog
+
+vim /etc/apache2/sites-enabled/site.ex
+
+"""
+...
+ErrorLog  "|/usr/bin/tee -a /srv/www/virtual/site.ex/log/error_log  | /usr/bin/logger -t apache -p local6.err"
+CustomLog "|/usr/bin/tee -a /srv/www/virtual/site.ex/log/access_log | /usr/bin/logger -t apache -p local6.notice" vhost_combined
+...
+"""
+
+# The following perl script can be used to reconfigure several vhosts at once
+
+vim findandreplace.pl
+
+"""
+#!/usr/bin/perl
+
+sub populateArrayFromFile {
+
+        my ($filename) = @_;
+
+        open FILE, $filename || die "Cannot open file ".$filename." for read";
+
+        @lines=<FILE>;
+
+        close FILE;
+
+        return @lines;
+
+}
+
+foreach my $filename (@ARGV) {
+
+        my @newlines = ();
+        my @lines = populateArrayFromFile($filename);
+        my $string;
+        my $newfilename = $filename . ".new";
+        my $backupfile = $filename . ".bak";
+        my $logformat;
+
+        rename $filename, $backupfile;
+
+        foreach $line (@lines){
+
+                if($line =~ m/(\s*\w+Log)\s(\S+)(.*)/){
+
+                        my $facility = $1;
+                        my $logfile = $2;
+
+                        if($1 =~ m/(\s*ErrorLog)/){
+
+                                $logging = " | /usr/bin/logger -t apache -p local6.err\"";
+
+                        } else {
+
+                                $logging = " | /usr/bin/logger -t apache -p local6.notice\"" . " vhost_combined";
+
+                        }
+
+                        $string = $facility . " \"|/usr/bin/tee -a " . $logfile . $logging . "\n";
+
+                } else {
+
+                        $string = $line;
+
+                }
+
+                push(@newlines,$string);
+
+        }
+
+        open(NEWFILE,">$filename") || die "cannot open $filename";
+
+        print NEWFILE @newlines;
+
+        close NEWFILE;
+
+}
+"""
+
+# Usage
+
+./findandreplace.pl `find /etc/apache2/sites-available/ -type f`
+
+# Store original configuration file backups
+
+mkdir /srv/backup/ && mv /etc/apache2/sites-available/*.bak /srv/backup/ && chmod 700 /srv/backup/ && chown root:root /srv/backup/
+
+6. Samba audit logging
+
+# Audit must be defined as module
+
+vim /etc/samba/smb.conf
+
+"""
+[global]
+
+...
+full_audit:prefix = %u|%I|%m|%S
+full_audit:success = mkdir rename unlink rmdir pwrite chmod fchmod chown fchown
+full_audit:failure = connect
+full_audit:facility = daemon
+full_audit:priority = NOTICE
+...
+"""
+
+# More verbose version
+
+"""
+...
+full_audit:failure = connect
+full_audit:success = connect disconnect opendir mkdir rmdir closedir open close read pread write pwrite sendfile rename unlink chmod fchmod chown fchown chdir ftruncate lock symlink readlink link mknod realpath
+...
+"""
+
+# Module must be activated per share basis
+
+"""
+[Share]
+
+...
+output omitted
+...
+vfs objects = full_audit
+"""
+
+7. Vsftpd
+
+# must be enabled from configuration file
+
+vim /etc/vsftpd.conf
+
+"""
+...
+syslog_enable=YES
+...
+"""

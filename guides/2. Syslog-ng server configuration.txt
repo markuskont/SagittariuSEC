@@ -1,0 +1,121 @@
+Resources allocated to virtual mahines:
+
+Orion:
+2 CPU cores Intel Xeon E5-26;
+1GB RAM;
+25GB virtual hard drive mounted on /var;
+Underlying storage is on RAID1 array;
+Virtual NIC within internal network.
+
+Sagittarius:
+2 CPU cores Intel Xeon E5649;
+1GB RAM;
+75GB virtual hard drive mounted on /var;
+Underlying storage is on RAID1 array;
+Virtual NIC within dedicated management network.
+
+This guide assumes that Ubuntu Server 12.04 LTS virtual machine with working network connection is installed and accessible via SSH. Basic understanding of vim command is assumed but configuration can be carried out with other editors as well. Functional custom CA setup is required with make_cert.sh script. Commands must be carried out as root user, execution via sudo is possible but untested.
+
+1. Install syslog-ng.
+
+apt-get update && apt-get upgrade && apt-get install syslog-ng
+
+2. Create server key and certificate pair.
+
+# enter CA directory
+cd /etc/ssl/CA/
+
+# export server FQDN (fully qualified domain name) for simple reference
+# example sagittarius.domain.ex
+export FQDN=sagittarius.domain.ex
+
+# create certificate for syslog server
+# Certificate CN field must match FQDN used for connection
+./make_cert.sh $FQDN
+
+# create custom folder to store key and certificates
+mkdir /etc/ssl/syslog && chown root:root /etc/ssl/syslog
+
+# copy certificate to custom folder
+cp ./{private,certs}/$FQDN* cacert.pem /etc/ssl/syslog/
+
+# protect private key permissions 
+chmod 0400 /etc/ssl/syslog/*key.pem
+
+# syslog-ng reads CA certificate from hash links in directory, so we have to create that
+c_rehash /etc/ssl/syslog/
+
+3. Create syslog-ng server configuration
+
+vim /etc/syslog-ng/syslog-ng.conf
+
+"""
+@version: 3.3
+@include "scl.conf"
+
+options { chain_hostnames(off); flush_lines(0); use_dns(no); use_fqdn(no);
+          owner("syslog"); group("adm"); perm(0640); stats_freq(0);
+          bad_hostname("^gconfd$");threaded(yes);
+};
+
+source s_src {
+       system();
+       internal();
+};
+
+source s_remote_ietf {
+        syslog(
+                ip(0.0.0.0)
+                transport("tls")
+                port(6514)
+                keep_hostname(yes)
+                max-connections(50)
+                tls( peer-verify(required-trusted) ca_dir('/etc/ssl/syslog/') key_file('/etc/ssl/syslog/sagittarius.keskus.sise-key.pem') cert_file('/etc/ssl/syslog/sagittarius.keskus.sise-cert.pem'))
+        );
+};
+
+#for legacy servers with no RFC5424 support
+#only use in physically separated networks or over VPN channel
+source s_remote_bsd {
+        tcp(
+                ip(192.168.66.183)
+                port(514)
+                keep_hostname(yes)
+        );
+};
+
+#filter channel that are used for multiple daemons
+filter f_daemon { facility(daemon, local0, local1, local2, local3, local4, local5, local6, local7); };
+filter f_not_daemon { not filter(f_daemon); };
+
+destination d_local {
+        file("/var/log/server/$FACILITY.$LEVEL.log");
+};
+
+destination d_local_daemon {
+        file("/var/log/server/daemon/$PROGRAM.$LEVEL.log");
+};
+
+log {
+        source(s_remote_ietf);
+        source(s_src);
+        filter (f_not_daemon);
+        destination(d_local);
+};
+
+log {
+        source(s_remote_ietf);
+        source(s_src);
+        filter (f_daemon);
+        destination(d_local_daemon);
+};
+"""
+
+4. Create directory for log collection
+
+mkdir -p /var/log/server/daemon
+chwon -R syslog /var/log/server
+
+5. Restart syslog daemon for changes to take effect
+
+/etc/init.d/syslog-ng restart

@@ -1,0 +1,120 @@
+This guide assumes that Ubuntu Server 12.04 LTS virtual machine with working network connection is installed and accessible via SSH. Basic understanding of vim command is assumed but configuration can be carried out with other editors as well. Commands must be carried out as root user, execution via sudo is possible but untested.
+
+1. Make sure that OpenSSL is installed
+
+apt-get update && apt-get upgrade && apt-get install openssl
+
+2. Set openssl default configuration options
+
+vim /etc/ssl/openssl.cnf
+
+"""
+dir = /etc/ssl/CA
+default_days = 3650
+
+private_key     = $dir/private/cakey.pem # The private key
+
+countryName_default = EE
+stateOrProvinceName_default = Harju
+0.organizationName_default = example ltd
+"""
+
+3. Create certificate authority
+
+mkdir /etc/ssl/CA
+cd /etc/ssl/CA
+
+#indexing database
+
+echo 1000 > serial
+touch index.txt
+
+#make sure that CA directory is not accessible to users
+
+chown root:root /etc/ssl/CA
+chmod 700 /etc/ssl/CA
+
+#create working folders
+
+mkdir {certs,newcerts,private,reqfiles}
+
+#create CA key and certificate
+
+openssl req -new -x509 -days 3650 -extensions v3_ca \
+-keyout private/cakey.pem -out cacert.pem \
+-config /etc/ssl/openssl.cnf
+
+chmod 0400 ./private/cakey.pem
+
+4. Create the following script for client certificate generation
+
+vim make_cert.sh
+
+"""
+#!/bin/bash
+
+die () {
+
+    echo "Error: $1"
+    exit 1
+
+}
+
+validate_input () {
+
+        OPERATOR=$1
+        REGEX='^[A-Z0-9a-z._-]+$'
+
+        if ! [[ $OPERATOR =~ $REGEX ]]
+        then
+
+                echo 'Invalid input'
+
+        else     
+
+                echo "Copy this to Common Name:"
+                echo ----------------
+                echo "$OPERATOR"
+                echo ----------------
+                gen_and_sign $OPERATOR || die $OPERATOR
+
+        fi
+
+}
+
+gen_and_sign () {
+
+        conffile=/etc/ssl/openssl.cnf
+        reqfile=reqfiles/$1-req.pem
+        keyfile=private/$1-key.pem
+        certfile=certs/$1-cert.pem
+
+        openssl req -new -nodes \
+                -out $reqfile \
+                -keyout $keyfile \
+                -config $conffile
+
+        sleep 1
+
+        openssl ca \
+                -batch \
+                -days 3650 \
+                -config $conffile \
+                -out $certfile \
+                -infiles $reqfile
+
+        chmod 0644 $reqfile $certfile
+        chmod 0400 $keyfile
+
+}
+
+validate_input $ARG
+"""
+
+#make the script executable
+
+chmod 700 ./make_cert.sh
+
+#usage
+
+./make_cert <server_FQDN>
