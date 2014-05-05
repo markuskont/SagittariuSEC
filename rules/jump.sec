@@ -25,18 +25,8 @@ cfset=apache-rules
 
 type=Jump
 ptype=RegExp
-pattern=smbd\[\d+\]:
-cfset=samba-rules
-
-type=Jump
-ptype=RegExp
 pattern=sshd\[\d+\]:
 cfset=sshd-rules
-
-type=Jump
-ptype=RegExp
-pattern=snmpd\[\d+\]:
-cfset=snmpd-rules
 
 type=Jump
 ptype=RegExp
