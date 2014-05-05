@@ -12,11 +12,11 @@ ptype=RegExp
 continue=TakeNext
 pattern=ATTACK_FROM_(?<remote_IP>\S+)
 desc=$+{remote_IP} | Generic attack: IP added to ban list
-action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables.sh $+{remote_IP} ")
+action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (su - sec -c "ssh root@firewall 'bash -s' -- < /opt/SagittariuSEC/scripts/iptables.sh $+{remote_IP}")
 window=60
 thresh=1
 desc2=$+{remote_IP} | Generic attack: IP removed from ban list
-action2=logonly; (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables_remove.sh $+{remote_IP}")
+action2=logonly; (su - sec -c "ssh root@firewall 'bash -s' -- < /opt/SagittariuSEC/scripts/iptables_remove.sh $+{remote_IP}")
 window2=60
 thresh2=0
 
@@ -31,11 +31,11 @@ ptype=RegExp
 continue=TakeNext
 pattern=DNS_AMP_ATTACK_(?<remote_IP>\S+)
 desc=$+{remote_IP} | DNS amp attack: IP added to ban list
-action=logonly; shellcmd (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables.sh $+{remote_IP} ")
+action=logonly; shellcmd (su - sec -c "ssh root@firewall 'bash -s' -- < /opt/SagittariuSEC/scripts/iptables.sh $+{remote_IP} ")
 window=5
 thresh=10
 desc2=$+{remote_IP} | DNS amp attack: IP removed from ban list
-action2=logonly; shellcmd (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables_remove.sh $+{remote_IP}")
+action2=logonly; shellcmd (su - sec -c "ssh root@firewall 'bash -s' -- < /opt/SagittariuSEC/scripts/iptables_remove.sh $+{remote_IP}")
 window2=900
 thresh2=0
 
@@ -45,6 +45,6 @@ type=SingleWithThreshold
 ptypeRegExp
 pattern=IP_BLOCKED_(?<remote_IP>\S+)
 desc=$+{remote_IP} | Repeated offender permanently blocked
-action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (su - sec -c "ssh root@__IP__ 'bash -s' -- < /opt/scripts/iptables.sh $+{remote_IP} ")
+action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (su - sec -c "ssh root@firewall 'bash -s' -- < /opt/SagittariuSEC/scripts/iptables.sh $+{remote_IP} ")
 window=604800
 thresh=10
