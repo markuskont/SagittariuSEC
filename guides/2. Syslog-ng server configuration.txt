@@ -1,19 +1,5 @@
 Resources allocated to virtual mahines:
 
-Orion:
-2 CPU cores Intel Xeon E5-26;
-1GB RAM;
-25GB virtual hard drive mounted on /var;
-Underlying storage is on RAID1 array;
-Virtual NIC within internal network.
-
-Sagittarius:
-2 CPU cores Intel Xeon E5649;
-1GB RAM;
-75GB virtual hard drive mounted on /var;
-Underlying storage is on RAID1 array;
-Virtual NIC within dedicated management network.
-
 This guide assumes that Ubuntu Server 12.04 LTS virtual machine with working network connection is installed and accessible via SSH. Basic understanding of vim command is assumed but configuration can be carried out with other editors as well. Functional custom CA setup is required with make_cert.sh script. Commands must be carried out as root user, execution via sudo is possible but untested.
 
 1. Install syslog-ng.
