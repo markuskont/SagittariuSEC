@@ -68,8 +68,8 @@ window=300
 
 # Lateral SSHD scan from botnet node
 # Pretty harmless but identifies malicious hosts and botnet nodes
-# Extracted IP can later be used for cross-correlation with other events
-# This can be done with EventGroup to count unique accessed hosts, but that is kind of overkill
+# Currently generates ATTACK_FROM_ event to test active defense
+# Once tested, use only to cross-correlate (maybe combine with webapp/auth CC rule?)
 
 type=SingleWithThreshold
 ptype=RegExp
@@ -77,5 +77,5 @@ pattern=\S*AUTH_CONN_FAILURE_\S+_(?<remote_IP>\S+)
 continue=TakeNext
 desc=$+{remote_IP} | Remote host attempts to access restricted ports, potentially on multiple servers
 action=logonly; event ATTACK_FROM_$+{remote_IP}
-thresh=15
-window=10
+thresh=5
+window=5
