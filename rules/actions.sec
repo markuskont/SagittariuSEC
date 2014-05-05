@@ -2,7 +2,7 @@
 
 type=Suppress
 ptype=RegExp
-pattern=(?:192\.168\.(?:\d{1,3}\){2})
+pattern=\S*(?:192\.168\.(?:\d{1,3}\){2})
 desc=Suppress known good IP ranges
 
 # Block attacker for X time
