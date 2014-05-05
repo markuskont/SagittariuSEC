@@ -10,7 +10,7 @@ die () {
 block_ip () {
 
     IPTABLES=`which iptables`
-    CHAIN_IP='INPUT'
+    CHAIN_IP='FORWARD'
     CHAIN_DROP='LOGDROP'
     ACTION='DROP'
     IP=$1
