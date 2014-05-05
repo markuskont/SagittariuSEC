@@ -20,4 +20,4 @@ type=Single
 ptype=RegExp
 pattern=client (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+?(?:view authoritative: zone transfer '(?<domain>\S+)/AXFR/IN' denied)
 desc=$+{remote_IP} | $+{domain} | Possible DNS amplification attack
-action=logonly; event DNS_ENUM_FROM_$+{remote_IP}
+action=logonly; event DNS_ENUM_$+{remote_IP}_$+{domain}
