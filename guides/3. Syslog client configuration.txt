@@ -1,0 +1,169 @@
+This guide assumes that operational syslog server on Ubuntu Server 12.04 LTS virtual machine with working network connection is installed and accessible via SSH. Basic understanding of vim command is assumed but configuration can be carried out with other editors as well. Functional custom CA setup is required with make_cert.sh script. Syslog server must be operational. Commands must be carried out as root user, execution via sudo is possible but untested. Key based SSH access to client device is recommended.
+
+Server side
+
+1. Generate client certificate
+
+cd /etc/ssl/CA
+
+export server=<server_FQDN>
+
+./make_cert $server
+
+2. Copy generated key and certificate to client device
+
+export cacert="/etc/ssl/CA/cacert.pem"
+export cert=`find /etc/ssl/CA/certs/ -type f -name $server*`
+export key=`find /etc/ssl/CA/private/ -type f -name $server*`
+export dest_dir=/etc/ssl/syslog
+
+ssh root@$server "mkdir -p $dest_dir"
+
+scp $cacert root@$server:$dest_dir/cacert.pem
+scp $cert root@$server:$dest_dir/cert.pem
+scp $key root@$server:$dest_dir/key.pem
+
+ssh root@$server "chown syslog $dest_dir/key.pem"
+
+# Syslog-ng
+
+ssh root@$server "c_rehash $dest_dir/"
+
+
+Client side
+
+1. Install needed programs on client
+
+# Debian based servers
+
+apt-get update && apt-get install rsyslog rsyslog-gnutls
+
+# OpenSUSE with rsyslog
+
+zypper ref && zypper in rsyslog rsyslog-module-gtls
+
+# OpenSUSE with syslog-ng
+
+zypper in syslog-ng openssl
+
+2. Create forwarding configuration
+
+# Rsyslog
+
+vim /etc/rsyslog.d/remote.conf
+
+"""
+$DefaultNetstreamDriverCAFile /etc/ssl/syslog/cacert.pem
+$DefaultNetstreamDriverCertFile /etc/ssl/syslog/cert.pem
+$DefaultNetstreamDriverKeyFile /etc/ssl/syslog/key.pem
+
+# set up the action
+$DefaultNetstreamDriver gtls
+$ActionSendStreamDriverMode 1
+$ActionSendStreamDriverAuthMode x509/name
+$ActionSendStreamDriverPermittedPeer sagittarius.domain.ex
+*.* @@(o)sagittarius.domain.ex:6514
+"""
+
+# Syslog-ng
+
+# Verify that source exists
+
+vim /etc/syslog-ng/syslog-ng.conf
+
+"""
+source src {
+        internal();
+        file ("/proc/kmsg" program_override("kernel"));
+        unix-dgram("/dev/log");
+};
+"""
+
+# append to end of file
+
+"""
+destination d_sagittarius {
+        syslog(
+                sagittarius.keskus.sise
+                transport("tls")
+                port(6514)
+                tls( peer-verify(required-trusted) ca_dir('/etc/ssl/syslog/') key_file('/etc/ssl/syslog/key.pem') cert_file('/etc/ssl/syslog/cert.pem'))
+        );
+};
+
+log { source(src); destination(d_sagittarius); };
+"""
+
+3. Restart syslog daemon
+
+/etc/init.d/syslog restart || /etc/init.d/rsyslog restart || /etc/init.d/syslog-ng restart
+
+########################
+# Following server-side script could be used to automate deployment
+# Rsyslog client is assumed
+# Be aware, script may not be portable and must be manually edited for your environment!
+# Disclaimer - Author is not responsible for any damage that user might cause to environment with recless use of this script!
+
+vim iterate.sh
+
+"""
+#!/bin/bash
+
+function copy_key () {
+
+        cacert="/etc/ssl/CA/cacert.pem"
+        cert=`find /etc/ssl/CA/certs/ -type f -name $server*`
+        key=`find /etc/ssl/CA/private/ -type f -name $server*`
+        dest_dir=/etc/ssl/syslog
+
+        ssh root@$server "mkdir -p $dest_dir"
+
+        scp $cacert root@$server:$dest_dir/cacert.pem
+        scp $cert root@$server:$dest_dir/cert.pem
+        scp $key root@$server:$dest_dir/key.pem
+
+        ssh root@$server "chown syslog $dest_dir/key.pem"
+
+}
+
+function rsyslog_config () {
+
+        config_file="/etc/rsyslog.d/remote.conf"
+
+        echo '$DefaultNetstreamDriverCAFile /etc/ssl/syslog/cacert.pem
+$DefaultNetstreamDriverCertFile /etc/ssl/syslog/cert.pem
+$DefaultNetstreamDriverKeyFile /etc/ssl/syslog/key.pem
+
+# set up the action
+$DefaultNetstreamDriver gtls
+$ActionSendStreamDriverMode 1
+$ActionSendStreamDriverAuthMode x509/name
+$ActionSendStreamDriverPermittedPeer sagittarius.example.ex
+*.* @@(o)sagittarius.example.ex:6514' | ssh root@$server "cat > $config_file"
+
+}
+
+function gtls_setup () {
+
+        ssh root@$server "zypper --non-interactive in rsyslog-module-gtls || apt-get install rsyslog-gnutls"
+
+}
+
+servers=("server1.example.ex" "server2.example.ex")
+
+for server in ${servers[@]}
+do
+        echo "---------------"
+        echo $server
+
+        /etc/ssl/CA/make_cert $server
+
+        copy_key
+
+        rsyslog_config
+
+        gtls_setup
+
+        ssh root@$server "/etc/init.d/syslog restart || /etc/init.d/rsyslog restart"
+done
+"""

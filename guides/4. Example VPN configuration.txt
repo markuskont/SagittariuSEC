@@ -1,0 +1,45 @@
+# Machine 1 - client
+
+port            1194
+proto           tcp-client
+dev             tun1
+remote          machine2.example.ex
+tls-client
+
+ca              /etc/openvpn/client/ca.crt
+cert            /etc/openvpn/client/machine1.example.ex.crt
+key             /etc/openvpn/client/machine1.example.ex.key
+
+ns-cert-type    server
+comp-lzo        yes
+cipher          AES-128-CBC
+pull
+
+# Machine 2 - server
+
+port                    1194
+proto                   tcp
+dev                     tun1
+tls-server
+
+ca                      /etc/openvpn/server/ca.crt
+cert                    /etc/openvpn/server/machine2.example.ex.crt
+key                     /etc/openvpn/server/machine2.example.ex.key
+dh                      /etc/openvpn/server/dh2048.pem
+
+cipher                  AES-128-CBC
+client-to-client
+
+mssfix                  1200
+comp-lzo                yes
+keepalive               7 20
+server                  192.168.67.248 255.255.255.248
+client-config-dir       /etc/openvpn/client-configs/
+
+script-security         2
+
+route                   192.168.0.0 255.255.255.0
+route                   192.168.67.248 255.255.255.248
+
+push                    "route 192.168.67.248 255.255.255.248"
+push                    "route 192.168.66.128 255.255.255.128"
