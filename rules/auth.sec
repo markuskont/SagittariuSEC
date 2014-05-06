@@ -78,4 +78,4 @@ continue=TakeNext
 desc=$+{remote_IP} | Remote host attempts to access restricted ports, potentially on multiple servers
 action=logonly; event ATTACK_FROM_$+{remote_IP}
 thresh=5
-window=5
+window=10
