@@ -46,7 +46,7 @@ thresh2=0
 # Fool me once shame on you, fool me 10 times in a single week...
 
 type=SingleWithThreshold
-ptypeRegExp
+ptype=RegExp
 pattern=IP_BLOCKED_(?<remote_IP>(?:\d{1,3}\.){3}\d{1,3})
 desc=$+{remote_IP} | Repeated offender permanently blocked
 action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd /opt/scripts/iptables.sh $+{remote_IP}
