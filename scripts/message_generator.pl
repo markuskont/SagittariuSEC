@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-
+# Originally written by Risto Vaarandi
+# Modified by Markus Kont
 
 $host = "myhost";
 $prog = "mytest[1234]";
