@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Originally written by Risto Vaarandi
+# Provided by Risto Vaarandi
 # Modified by Markus Kont
 
 $host = "myhost";
