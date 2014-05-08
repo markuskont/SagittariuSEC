@@ -1,0 +1,74 @@
+Intel E5-2620 CPU
+2 CPU cores and 2GB RAM on central server
+2 CPU cores and 512MB RAM per remote host
+VmWare ESXi 5.5 host
+5 remote hosts
+4 parallel script executions per host
+300 000 messages per script
+Remote hosts initiate message generation every 15 minutes
+Rsyslog5, Rsyslog7, Rsyslog8 and NXLog are rotated every 15 minutes on central cerver on even hours
+Syslog-ng 3.3 and 3.5 are rotated every 30 minutes on central server
+All messages containing "DONE" string are filtered to /var/log/done.log
+Rsyslog repeat filtering off
+Syslog-ng multithreading on, tcp() input driver, max-connections(25)
+SEC SingleWithThreshold reads /var/log/done.log, if 20 "DONE" messages in 60 seconds equals TRUE then (pkill "rsyslog|syslog-ng|nxlog" && rm /var/log/test.*)
+Unencrypted BSD
+Filtering based on output file template (test.daemon.facility.$facility.severity.$severity.log)
+
+NXLog:
+
+442.34user 160.19system 5:36.18elapsed 179%CPU (0avgtext+0avgdata 400480maxresident)k
+4144inputs+959824outputs (14major+31469minor)pagefaults 0swaps
+443.61user 142.66system 5:13.57elapsed 186%CPU (0avgtext+0avgdata 466016maxresident)k
+0inputs+959432outputs (0major+33573minor)pagefaults 0swaps
+452.46user 116.46system 5:06.82elapsed 185%CPU (0avgtext+0avgdata 575664maxresident)k
+0inputs+958464outputs (0major+44649minor)pagefaults 0swaps
+
+
+Rsyslog5:
+
+38.19user 45.53system 1:25.51elapsed 97%CPU (0avgtext+0avgdata 25472maxresident)k
+2856inputs+897184outputs (12major+29640minor)pagefaults 0swaps
+38.50user 44.98system 1:24.77elapsed 98%CPU (0avgtext+0avgdata 25488maxresident)k
+0inputs+897208outputs (0major+33690minor)pagefaults 0swaps
+41.91user 47.37system 1:30.82elapsed 98%CPU (0avgtext+0avgdata 25600maxresident)k
+0inputs+897176outputs (0major+29667minor)pagefaults 0swaps
+
+
+Rsyslog7:
+
+37.74user 67.26system 1:39.78elapsed 105%CPU (0avgtext+0avgdata 222928maxresident)k
+3760inputs+899664outputs (15major+264609minor)pagefaults 0swaps
+35.13user 57.54system 1:27.74elapsed 105%CPU (0avgtext+0avgdata 227888maxresident)k
+0inputs+897168outputs (0major+257272minor)pagefaults 0swaps
+32.36user 54.27system 1:21.64elapsed 106%CPU (0avgtext+0avgdata 216384maxresident)k
+0inputs+897184outputs (0major+248357minor)pagefaults 0swaps
+
+
+Rsyslog8:
+
+31.25user 56.57system 1:23.84elapsed 104%CPU (0avgtext+0avgdata 213536maxresident)k
+3440inputs+897176outputs (14major+263799minor)pagefaults 0swaps
+28.64user 49.01system 1:14.49elapsed 104%CPU (0avgtext+0avgdata 215824maxresident)k
+0inputs+897608outputs (0major+260190minor)pagefaults 0swaps
+28.12user 48.41system 1:13.00elapsed 104%CPU (0avgtext+0avgdata 216624maxresident)k
+0inputs+897712outputs (0major+250423minor)pagefaults 0swaps
+
+
+Syslog-ng 3.3:
+
+44.96user 27.52system 0:47.59elapsed 152%CPU (0avgtext+0avgdata 27552maxresident)k
+0inputs+967320outputs (1major+17320minor)pagefaults 0swaps
+41.99user 24.88system 0:42.72elapsed 156%CPU (0avgtext+0avgdata 27184maxresident)k
+0inputs+966232outputs (1major+40185minor)pagefaults 0swaps
+43.55user 26.87system 0:44.77elapsed 157%CPU (0avgtext+0avgdata 27856maxresident)k
+0inputs+966736outputs (1major+33478minor)pagefaults 0swaps
+
+Syslog-ng 3.5:
+
+39.54user 23.50system 0:41.34elapsed 152%CPU (0avgtext+0avgdata 25856maxresident)k
+0inputs+966216outputs (1major+68387minor)pagefaults 0swaps
+39.01user 20.03system 0:39.13elapsed 150%CPU (0avgtext+0avgdata 27296maxresident)k
+0inputs+966240outputs (1major+4199minor)pagefaults 0swaps
+42.12user 24.53system 0:43.42elapsed 153%CPU (0avgtext+0avgdata 24912maxresident)k
+0inputs+966656outputs (1major+16307minor)pagefaults 0swaps
