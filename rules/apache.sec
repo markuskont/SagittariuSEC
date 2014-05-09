@@ -9,7 +9,7 @@ procallin=no
 # Path traversal
 type=Single
 ptype=RegExp
-pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?:(?i:\.|\%2e){2,}(?:(?i:/|\\|\%2f|%c0%af)+))+
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?:(?i:\.|\%2e){2,}(?:(?i:/|\|\%2f|%c0%af)+))+
 desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: directory traversal
 action=logonly; event OSCOMMAND_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
 
