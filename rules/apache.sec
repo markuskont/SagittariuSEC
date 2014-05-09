@@ -41,7 +41,7 @@ action=logonly; event CODE_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
 # SELECT * FROM
 type=Single
 ptype=RegExp
-pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?i:SELECT%\S*from)
+pattern=(?<server>[\w-]+) apache:\s?(?<vhost>\S+)? (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+(?i:select%\S*from)
 desc=$+{vhost} | $+{remote_IP} | $+{server} | webapp injection: SQL SELECT FROM statement
 action=logonly; event SQL_INJECTION_WEBAPP_$+{server}_$+{remote_IP}_$+{vhost}
 
