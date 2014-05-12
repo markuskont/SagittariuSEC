@@ -276,6 +276,23 @@ foreach my $filename (@ARGV) {
 
 mkdir /srv/backup/ && mv /etc/apache2/sites-available/*.bak /srv/backup/ && chmod 700 /srv/backup/ && chown root:root /srv/backup/
 
+5.4. Awstats
+
+# If your vhost is configured to read statistics then vhost_combined log format will break it
+# Awstats LogFormat must understand vhost name
+# Even after format change, port after the vhost (site.ex:80) name will break statistics
+# HostAliases must be changed for that
+
+vim /etc/awstats/awstats.<vhost>
+
+"""
+...
+LogFormat = "%virtualname %host %other %logname %time1 %methodurl %code %bytesd %refererquot %uaquot"
+...
+HostAliases="site.ex:80 www.site.ex:80"
+...
+"""
+
 6. Samba audit logging
 
 # Audit must be defined as module
