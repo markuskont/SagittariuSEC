@@ -149,6 +149,20 @@ function gtls_setup () {
 
 }
 
+function gtls_setup_ubuntu () {
+
+        ssh root@$server "apt-get update && apt-get install rsyslog-gnutls"
+
+        sleep 1
+
+        ssh root@$server "apt-get install rsyslog-gnutls"
+
+        sleep 1
+
+        ssh root@$server "/etc/init.d/rsyslog restart"
+
+}
+
 servers=("server1.example.ex" "server2.example.ex")
 
 for server in ${servers[@]}
