@@ -151,7 +151,7 @@ function gtls_setup () {
 
 function gtls_setup_ubuntu () {
 
-        ssh root@$server "apt-get update && apt-get install rsyslog-gnutls"
+        ssh root@$server "apt-get update"
 
         sleep 1
 
@@ -159,7 +159,7 @@ function gtls_setup_ubuntu () {
 
         sleep 1
 
-        ssh root@$server "/etc/init.d/rsyslog restart"
+        ssh root@$server "service rsyslog restart"
 
 }
 
