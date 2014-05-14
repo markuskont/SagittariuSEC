@@ -6,7 +6,7 @@ type=SingleWithSuppress
 ptype=RegExp
 pattern=(?<server>[\w-]+) dovecot: deliver\((\S+)\).+?(?:\(mailbox for user is full\))
 desc=$1 | $2 | Mailbox full
-action=logonly; shellcmd(/opt/scripts/sendmail.sh %s)
+action=logonly; shellcmd /opt/scripts/sendmail.sh %s
 window=43200
 
 # dovecot pop3 and imap failures
