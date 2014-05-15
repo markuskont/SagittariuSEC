@@ -54,6 +54,8 @@ desc=$+{remote_IP} | $+{server} | Combined authentication and web application at
 action=logonly; event ATTACK_FROM_$+{remote_IP}
 window=60
 
+# Generate attack from identified webapp exploits
+
 type=Single
 ptype=RegExp
 pattern=\S*EXPLOIT_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)
