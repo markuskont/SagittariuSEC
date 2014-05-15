@@ -14,13 +14,13 @@ window=10
 # Might catch manual hacking attempts
 
 type=EventGroup
-init=create USER_COUNTING_$+{remote_IP}_$+{vhost}
-end=delete USER_COUNTING_$+{remote_IP}_$+{vhost}
+init=create INJECT_COUNTING_$+{remote_IP}_$+{vhost}
+end=delete INJECT_COUNTING_$+{remote_IP}_$+{vhost}
 continue=TakeNext
 ptype=RegExp
 pattern=(?<inject_type>[\w-]+)_INJECTION_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)
-context=!COUNTED_$+{remote_IP}_$+{vhost}_$+{inject_type}
-count=alias USER_COUNTING_$+{remote_IP}_$+{vhost} COUNTED_$+{remote_IP}_$+{vhost}_$+{inject_type}
+context=!INJECT_COUNTED_$+{remote_IP}_$+{vhost}_$+{inject_type}
+count=alias INJECT_COUNTING_$+{remote_IP}_$+{vhost} INJECT_COUNTED_$+{remote_IP}_$+{vhost}_$+{inject_type}
 desc=$+{remote_IP} | $+{vhost} | Multiple distinct web application injections from single IP 
 action=logonly; event ATTACK_FROM_$+{remote_IP}
 window=300
