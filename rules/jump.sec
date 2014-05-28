@@ -30,7 +30,7 @@ cfset=sshd-rules
 
 type=Jump
 ptype=RegExp
-pattern=pure-ftpd:
+pattern=(?:pure-ftpd|vsftpd):
 cfset=ftp-rules
 
 type=Jump
