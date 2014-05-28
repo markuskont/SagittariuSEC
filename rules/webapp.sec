@@ -4,7 +4,7 @@
 type=SingleWithThreshold
 continue=TakeNext
 ptype=RegExp
-pattern=\S*INJECTION_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)
+pattern=\S*INJECTION_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)$
 desc=$+{remote_IP} | $+{vhost} |  Burst web application attack
 action=logonly; event ATTACK_FROM_$+{remote_IP}
 thresh=20
@@ -19,7 +19,7 @@ end=delete INJECT_COUNTING_$+{remote_IP}_$+{vhost}
 continue=TakeNext
 ptype=RegExp
 pattern=(?<inject_type>[\w-]+)_INJECTION_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)
-context=!INJECT_COUNTED_$+{remote_IP}_$+{vhost}_$+{inject_type}
+context=!INJECT_COUNTED_$+{remote_IP}_$+{vhost}_$+{inject_type}$
 count=alias INJECT_COUNTING_$+{remote_IP}_$+{vhost} INJECT_COUNTED_$+{remote_IP}_$+{vhost}_$+{inject_type}
 desc=$+{remote_IP} | $+{vhost} | Multiple distinct web application injections from single IP
 action=logonly; event ATTACK_FROM_$+{remote_IP}
@@ -59,6 +59,6 @@ window=60
 
 type=Single
 ptype=RegExp
-pattern=\S*EXPLOIT_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)
+pattern=\S*EXPLOIT_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)$
 desc=$+{remote_IP} | $+{vhost} |  Web application exploit attack
 action=logonly; event ATTACK_FROM_$+{remote_IP}
