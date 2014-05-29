@@ -32,3 +32,22 @@ $InputTCPServerStreamDriverPermittedPeer *.domain.ex
 $InputTCPServerStreamDriverMode 1 # run driver in TLS-only mode
 $InputTCPServerRun 6514 # start up listener at port 6514
 """
+
+# For simple change in domain name value, 
+# Don't forget to escape the dot (matching is done using regular expressions; unescaped dot means "match anything")
+
+sed -i s/domain\.ex/<your_value>/g /etc/rsyslog.d/remote.conf
+
+service rsyslog restart
+
+2.1. Forward all logs from central syslog-ng server to rsyslog-elasticsearch server
+
+# On central server
+
+vim /etc/syslog-ng/syslog-ng.conf
+
+"""
+...
+
+...
+"""
