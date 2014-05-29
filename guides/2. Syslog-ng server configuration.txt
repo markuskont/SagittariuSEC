@@ -56,7 +56,7 @@ source s_remote_ietf {
                 port(6514)
                 keep_hostname(yes)
                 max-connections(50)
-                tls( peer-verify(required-trusted) ca_dir('/etc/ssl/syslog/') key_file('/etc/ssl/syslog/sagittarius.keskus.sise-key.pem') cert_file('/etc/ssl/syslog/sagittarius.keskus.sise-cert.pem'))
+                tls( peer-verify(required-trusted) ca_dir('/etc/ssl/syslog/') key_file('/etc/ssl/syslog/sagittarius.domain.ex-key.pem') cert_file('/etc/ssl/syslog/sagittarius.domain.ex-cert.pem'))
         );
 };
 

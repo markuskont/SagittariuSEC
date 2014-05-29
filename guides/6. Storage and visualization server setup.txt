@@ -1,0 +1,34 @@
+####Work in progress####
+
+
+This guide assumes that operational syslog server on Ubuntu Server 14.04 LTS virtual machine with working network connection is installed and accessible via SSH. Basic understanding of vim command is assumed but configuration can be carried out with other editors as well. Functional custom CA setup is required with make_cert.sh script. Syslog server must be operational. Commands must be carried out as root user, execution via sudo is possible but untested. Relevant entries must be appended to presented configuration files or, if already present, altered according to temlates within this guide. Relevant services must be restarted for changes to take effect.
+
+Storage + visualization serveri is configured separately from regular correlation server (Guide 2.). This is due to the fact that described components require java (personal preference, but I do not like mixing it with other solututions). Server can be used independantly as central log collector, or , in my case, all logs from syslog-ng correlation server will be forwarded here for storage and visualization.
+
+Please change domain.ex with your own domain name. Same goes for server names.
+
+1. Set up certificates
+
+# Create certificates 
+# Ref. Guide 3. (Server side points 1. and 2.)
+
+2. Set up Rsyslog 7 log collector
+
+apt-get update && apt-get -y upgrade && apt-get -y install rsyslog-gnutls
+
+vim /etc/rsyslog.d/remote.conf
+
+"""
+# TLS driver load
+$DefaultNetstreamDriver gtls
+
+# certificate files
+$DefaultNetstreamDriverCAFile /etc/ssl/syslog/cacert.pem
+$DefaultNetstreamDriverCertFile /etc/ssl/syslog/orion.domain.ex-cert.pem
+$DefaultNetstreamDriverKeyFile /etc/ssl/syslog/orion.domain.ex-key.pem
+
+$ActionSendStreamDriverAuthMode x509/name
+$InputTCPServerStreamDriverPermittedPeer *.domain.ex
+$InputTCPServerStreamDriverMode 1 # run driver in TLS-only mode
+$InputTCPServerRun 6514 # start up listener at port 6514
+"""
