@@ -16,6 +16,10 @@ Please change domain.ex with your own domain name. Same goes for server names.
 
 apt-get update && apt-get -y upgrade && apt-get -y install rsyslog-gnutls
 
+# Maybe with custom PPA - this is not included with 14.04 default repo
+# WIP
+# apt-get install rsyslog-elasticsearch
+
 vim /etc/rsyslog.conf
 
 """
@@ -74,8 +78,6 @@ log {
         destination(d_kibana_server);
 };
 ...
-
-
 """
 
 service syslog-ng restart
@@ -83,3 +85,4 @@ service syslog-ng restart
 3. Set up elasticsearch on kibana-elasticsearch server
 
 # http://blog.sematext.com/2013/07/01/recipe-rsyslog-elasticsearch-kibana/
+# WIP
