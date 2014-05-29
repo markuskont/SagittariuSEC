@@ -32,8 +32,8 @@ $DefaultNetstreamDriver gtls
 
 # certificate files
 $DefaultNetstreamDriverCAFile /etc/ssl/syslog/cacert.pem
-$DefaultNetstreamDriverCertFile /etc/ssl/syslog/orion.domain.ex-cert.pem
-$DefaultNetstreamDriverKeyFile /etc/ssl/syslog/orion.domain.ex-key.pem
+$DefaultNetstreamDriverCertFile /etc/ssl/syslog/cert.pem
+$DefaultNetstreamDriverKeyFile /etc/ssl/syslog/key.pem
 
 $ActionSendStreamDriverAuthMode x509/name
 $InputTCPServerStreamDriverPermittedPeer *.domain.ex
