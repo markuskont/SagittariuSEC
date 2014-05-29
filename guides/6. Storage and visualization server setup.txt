@@ -67,6 +67,19 @@ destination d_kibana_server {
         );
 };
 ...
+log {
+        source(s_remote_ietf);
+        source(s_src);
+        destination(d_local);
+        destination(d_kibana_server);
+};
+...
+
+
 """
 
 service syslog-ng restart
+
+3. Set up elasticsearch on kibana-elasticsearch server
+
+# http://blog.sematext.com/2013/07/01/recipe-rsyslog-elasticsearch-kibana/
