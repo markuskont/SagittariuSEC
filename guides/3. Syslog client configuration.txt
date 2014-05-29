@@ -23,7 +23,7 @@ scp $cacert root@$server:$dest_dir/cacert.pem
 scp $cert root@$server:$dest_dir/cert.pem
 scp $key root@$server:$dest_dir/key.pem
 
-ssh root@$server "chown syslog $dest_dir/key.pem"
+ssh root@$server "chmod 0600 $dest_dir/key.pem && chown syslog $dest_dir/key.pem"
 
 # Syslog-ng
 

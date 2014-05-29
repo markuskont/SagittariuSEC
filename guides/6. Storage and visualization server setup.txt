@@ -16,6 +16,14 @@ Please change domain.ex with your own domain name. Same goes for server names.
 
 apt-get update && apt-get -y upgrade && apt-get -y install rsyslog-gnutls
 
+vim /etc/rsyslog.conf
+
+"""
+...
+$ModLoad imtcp
+...
+"""
+
 vim /etc/rsyslog.d/remote.conf
 
 """
@@ -36,7 +44,9 @@ $InputTCPServerRun 6514 # start up listener at port 6514
 # For simple change in domain name value, 
 # Don't forget to escape the dot (matching is done using regular expressions; unescaped dot means "match anything")
 
-sed -i s/domain\.ex/<your_value>/g /etc/rsyslog.d/remote.conf
+export domain_name=<your_domain_name>
+
+sed -i s/domain\.ex/$domain_name/g /etc/rsyslog.d/remote.conf
 
 service rsyslog restart
 
@@ -48,6 +58,15 @@ vim /etc/syslog-ng/syslog-ng.conf
 
 """
 ...
-
+destination d_kibana_server {
+        syslog(
+                kibana.domain.ex
+                transport("tls")
+                port(6514)
+                tls( peer-verify(required-trusted) ca_dir('/etc/ssl/syslog/') key_file('/etc/ssl/syslog/orion.domain.ex-key.pem') cert_file('/etc/ssl/syslog/orion.domain.ex-cert.pem'))
+        );
+};
 ...
 """
+
+service syslog-ng restart
