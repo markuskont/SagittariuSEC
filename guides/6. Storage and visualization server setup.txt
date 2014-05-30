@@ -15,6 +15,7 @@ Please change domain.ex with your own domain name. Same goes for server names.
 2. Set up Rsyslog 8 log collector
 
 # We use rsyslog 8 ppa, since earlier version does not provide elasticsearch plugin
+# You can compile by hand but I consider this approach cruel and unusual punishment for any sysadmin
 
 add-apt-repository ppa:adiscon/v8-stable
 apt-get update && apt-get dist-upgrade && apt-get dist-upgrade
@@ -139,3 +140,73 @@ action(type="omelasticsearch"
 
 /etc/init.d/rsyslog restart
 
+5. Set up kibana3
+
+apt-get install git
+cd /opt
+
+git clone https://github.com/elasticsearch/kibana.git
+
+cd kibana
+
+# configure elasticsearch backend by FQDN of elasticsearch host (we configured it on same machine)
+
+vim src/config.js
+
+"""
+...
+elasticsearch: "http://kibana.domain.ex:9200",
+...
+"""
+
+5.1. Set up secure apache web server for kibana
+
+# Install apache web server
+
+apt-get install apache2
+a2dissite default
+service apache2 reload
+
+vim /etc/apache2/sites-available/vhost_ssl_template
+
+"""
+<Directory /srv/virtuals/__VHOST__>
+                AllowOverride None
+                Order Deny,Allow
+                Deny from all
+</Directory>
+
+<VirtualHost *:443>
+  ServerName __VHOST__
+  ServerAdmin webmaster@spin.ee
+  DocumentRoot /srv/virtuals/__VHOST__/html/
+
+  <Directory /srv/virtuals/__VHOST__/html/>
+      Options FollowSymLinks
+      AllowOverride All
+      Order allow,deny
+      Allow from all
+  </Directory>
+
+
+  SuexecUserGroup cvsmootor cvsmootor
+  <Directory /srv/virtuals/__VHOST__/html/>
+    Options +ExecCGI
+    AllowOverride All
+    AddHandler fcgid-script .php
+    FCGIWrapper /srv/www/php-fcgi-scripts/cvsmootor/php-fcgi-starter .php
+    Order allow,deny
+    Allow from all
+  </Directory>
+
+  SSLEngine on
+  SSLCertificateFile /etc/apache2/__VHOST__/__VHOST__.crt
+  #SSLCertificateKeyFile /etc/apache2/__VHOST__/__VHOST__.key
+  SSLCertificateKeyFile /etc/apache2/id_rsa.key
+
+  ErrorLog "|/usr/bin/tee -a /srv/virtuals/__VHOST__/log/ssl-error.log | /usr/bin/logger -t apache -p local6.err"
+  CustomLog "|/usr/bin/tee -a /srv/virtuals/__VHOST__/log/ssl-access.log | /usr/bin/logger -t apache -p local6.notice" vhost_combined
+  ServerSignature Off
+
+</VirtualHost>
+"""
