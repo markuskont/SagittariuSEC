@@ -142,25 +142,10 @@ action(type="omelasticsearch"
 
 5. Set up kibana3
 
-apt-get install git
-cd /opt
-
-git clone https://github.com/elasticsearch/kibana.git
-
-cd kibana
-
-# configure elasticsearch backend by FQDN of elasticsearch host (we configured it on same machine)
-
-vim src/config.js
-
-"""
-...
-elasticsearch: "http://kibana.domain.ex:9200",
-...
-"""
 
 5.1. Set up apache vhost templates
 
+# WIP
 # Install apache web server
 
 apt-get install apache2
@@ -173,8 +158,7 @@ vim /etc/apache2/sites-available/vhost_ssl_template
 """
 <Directory /srv/virtuals/__VHOST__>
                 AllowOverride None
-                Order Deny,Allow
-                Deny from all
+	Require all granted
 </Directory>
 
 <VirtualHost *:443>
@@ -185,8 +169,7 @@ vim /etc/apache2/sites-available/vhost_ssl_template
   <Directory /srv/virtuals/__VHOST__/html/>
       Options FollowSymLinks
       AllowOverride All
-      Order allow,deny
-      Allow from all
+      Require all granted
   </Directory>
 
   SSLEngine on
@@ -211,12 +194,10 @@ vim /etc/apache2/sites-available/vhost_redirect_template
 </VirtualHost>
 """
 
-5.2. Create apache vhost folders
+5.2. Create apache vhost for kibana
 
 export VHOST=kibana.domain.ex
 mkdir -p /srv/virtuals/$VHOST/{html,log}
-
-5.3. Create SSL stuff
 
 ssh-keygen -t rsa -b 2048
 
@@ -227,3 +208,31 @@ mkdir /etc/apache2/$VHOST && openssl req -new -key /etc/apache2/id_rsa.key -out 
 #CN=$VHOST
 
 openssl x509 -req -days 1825 -in /etc/apache2/$VHOST/$VHOST.csr -signkey /etc/apache2/id_rsa.key -out /etc/apache2/$VHOST/$VHOST.crt
+
+cp /etc/apache2/sites-available/vhost_ssl_template /etc/apache2/sites-available/$VHOST-ssl.conf
+cp /etc/apache2/sites-available/vhost_redirect_template /etc/apache2/sites-available/$VHOST.conf
+sed -i s/__VHOST__/$VHOST/g /etc/apache2/sites-available/$VHOST-ssl.conf
+sed -i s/__VHOST__/$VHOST/g /etc/apache2/sites-available/$VHOST.conf
+a2enmod ssl
+a2ensite $VHOST-ssl
+a2ensite $VHOST
+/etc/init.d/apache2 reload
+
+5.3. kibana
+
+apt-get install unzip
+cd /opt
+
+wget http://download.elasticsearch.org/kibana/kibana/kibana-latest.zip
+
+mv kibana-latest/* /srv/virtuals/$VHOST/html/ && cd /srv/virtuals/$VHOST/html/
+
+# configure elasticsearch backend by FQDN of elasticsearch host (we configured it on same machine)
+
+vim src/config.js
+
+"""
+...
+elasticsearch: "http://kibana.domain.ex:9200",
+...
+"""
