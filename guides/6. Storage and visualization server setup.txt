@@ -12,13 +12,13 @@ Please change domain.ex with your own domain name. Same goes for server names.
 # Create certificates 
 # Ref. Guide 3. (Server side points 1. and 2.)
 
-2. Set up Rsyslog 7 log collector
+2. Set up Rsyslog 8 log collector
 
-apt-get update && apt-get -y upgrade && apt-get -y install rsyslog-gnutls
+# We use rsyslog 8 ppa, since earlier version does not provide elasticsearch plugin
 
-# Maybe with custom PPA - this is not included with 14.04 default repo
-# WIP
-# apt-get install rsyslog-elasticsearch
+add-apt-repository ppa:adiscon/v8-stable
+apt-get update && apt-get dist-upgrade && apt-get dist-upgrade
+apt-get -y install rsyslog-elasticsearch rsyslog-gnutls
 
 vim /etc/rsyslog.conf
 
@@ -82,7 +82,60 @@ log {
 
 service syslog-ng restart
 
-3. Set up elasticsearch on kibana-elasticsearch server
+3. Set up elasticsearch server
 
-# http://blog.sematext.com/2013/07/01/recipe-rsyslog-elasticsearch-kibana/
-# WIP
+apt-get install openjdk-7-jre-headless -y
+
+# Download elasticsearch installer
+cd /opt/
+export elastic_version=elasticsearch-1.2.0.deb
+wget https://download.elasticsearch.org/elasticsearch/elasticsearch/$elastic_version
+dpkg -i $elastic_version
+
+# add to startup
+update-rc.d elasticsearch defaults 95 10
+
+# start server
+/etc/init.d/elasticsearch start
+
+4. Configure rsyslog to forward logs to elasticsearch
+
+vim /etc/rsyslog.d/elasticsearch.conf
+
+#form http://blog.sematext.com/2013/07/01/recipe-rsyslog-elasticsearch-kibana/
+
+"""
+module(load="imuxsock")             # for listening to /dev/log
+module(load="omelasticsearch") # for outputting to Elasticsearch
+# this is for index names to be like: logstash-YYYY.MM.DD
+template(name="logstash-index"
+  type="list") {
+    constant(value="logstash-")
+    property(name="timereported" dateFormat="rfc3339" position.from="1" position.to="4")
+    constant(value=".")
+    property(name="timereported" dateFormat="rfc3339" position.from="6" position.to="7")
+    constant(value=".")
+    property(name="timereported" dateFormat="rfc3339" position.from="9" position.to="10")
+}
+
+# this is for formatting our syslog in JSON with @timestamp
+template(name="plain-syslog"
+  type="list") {
+    constant(value="{")
+      constant(value="\"@timestamp\":\"")     property(name="timereported" dateFormat="rfc3339")
+      constant(value="\",\"host\":\"")        property(name="hostname")
+      constant(value="\",\"severity\":\"")    property(name="syslogseverity-text")
+      constant(value="\",\"facility\":\"")    property(name="syslogfacility-text")
+      constant(value="\",\"tag\":\"")   property(name="syslogtag" format="json")
+      constant(value="\",\"message\":\"")    property(name="msg" format="json")
+    constant(value="\"}")
+}
+# this is where we actually send the logs to Elasticsearch (localhost:9200 by default)
+action(type="omelasticsearch"
+    template="plain-syslog"
+    searchIndex="logstash-index"
+    dynSearchIndex="on")
+"""
+
+/etc/init.d/rsyslog restart
+
