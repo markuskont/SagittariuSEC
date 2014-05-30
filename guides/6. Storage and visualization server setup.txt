@@ -159,14 +159,15 @@ elasticsearch: "http://kibana.domain.ex:9200",
 ...
 """
 
-5.1. Set up secure apache web server for kibana
+5.1. Set up apache vhost templates
 
 # Install apache web server
 
 apt-get install apache2
-a2dissite default
+a2dissite 000-default
 service apache2 reload
 
+# We use HTTPS by default
 vim /etc/apache2/sites-available/vhost_ssl_template
 
 """
@@ -178,7 +179,7 @@ vim /etc/apache2/sites-available/vhost_ssl_template
 
 <VirtualHost *:443>
   ServerName __VHOST__
-  ServerAdmin webmaster@spin.ee
+  ServerAdmin webmaster@domain.ex
   DocumentRoot /srv/virtuals/__VHOST__/html/
 
   <Directory /srv/virtuals/__VHOST__/html/>
@@ -186,17 +187,6 @@ vim /etc/apache2/sites-available/vhost_ssl_template
       AllowOverride All
       Order allow,deny
       Allow from all
-  </Directory>
-
-
-  SuexecUserGroup cvsmootor cvsmootor
-  <Directory /srv/virtuals/__VHOST__/html/>
-    Options +ExecCGI
-    AllowOverride All
-    AddHandler fcgid-script .php
-    FCGIWrapper /srv/www/php-fcgi-scripts/cvsmootor/php-fcgi-starter .php
-    Order allow,deny
-    Allow from all
   </Directory>
 
   SSLEngine on
@@ -210,3 +200,30 @@ vim /etc/apache2/sites-available/vhost_ssl_template
 
 </VirtualHost>
 """
+
+# Redirect HTTP traffic to HTTPS
+vim /etc/apache2/sites-available/vhost_redirect_template
+
+"""
+<VirtualHost *:80>
+  ServerName __VHOST__
+  Redirect permanent / https://__VHOST__
+</VirtualHost>
+"""
+
+5.2. Create apache vhost folders
+
+export VHOST=kibana.domain.ex
+mkdir -p /srv/virtuals/$VHOST/{html,log}
+
+5.3. Create SSL stuff
+
+ssh-keygen -t rsa -b 2048
+
+#save in /etc/apache2/id_rsa.key
+
+mkdir /etc/apache2/$VHOST && openssl req -new -key /etc/apache2/id_rsa.key -out /etc/apache2/$VHOST/$VHOST.csr
+
+#CN=$VHOST
+
+openssl x509 -req -days 1825 -in /etc/apache2/$VHOST/$VHOST.csr -signkey /etc/apache2/id_rsa.key -out /etc/apache2/$VHOST/$VHOST.crt
