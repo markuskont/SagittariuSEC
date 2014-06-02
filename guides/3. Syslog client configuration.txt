@@ -8,7 +8,7 @@ cd /etc/ssl/CA
 
 export server=<server_FQDN>
 
-./make_cert $server
+./make_cert.sh $server
 
 2. Copy generated key and certificate to client device
 

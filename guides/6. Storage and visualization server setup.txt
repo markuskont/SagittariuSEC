@@ -167,9 +167,12 @@ vim /etc/apache2/sites-available/vhost_ssl_template
   DocumentRoot /srv/virtuals/__VHOST__/html/
 
   <Directory /srv/virtuals/__VHOST__/html/>
-      Options FollowSymLinks
-      AllowOverride All
-      Require all granted
+                Options +FollowSymLinks +Multiviews +Indexes
+                AllowOverride None
+                AuthType basic
+                AuthName "private"
+                AuthUserFile /var/secure/.htpasswd
+                Require valid-user
   </Directory>
 
   SSLEngine on
@@ -177,8 +180,8 @@ vim /etc/apache2/sites-available/vhost_ssl_template
   #SSLCertificateKeyFile /etc/apache2/__VHOST__/__VHOST__.key
   SSLCertificateKeyFile /etc/apache2/id_rsa.key
 
-  ErrorLog "|/usr/bin/tee -a /srv/virtuals/__VHOST__/log/ssl-error.log | /usr/bin/logger -t apache -p local6.err"
-  CustomLog "|/usr/bin/tee -a /srv/virtuals/__VHOST__/log/ssl-access.log | /usr/bin/logger -t apache -p local6.notice" vhost_combined
+  ErrorLog "/srv/virtuals/__VHOST__/log/ssl-error.log"
+  CustomLog "/srv/virtuals/__VHOST__/log/ssl-access.log" vhost_combined
   ServerSignature Off
 
 </VirtualHost>
@@ -194,7 +197,52 @@ vim /etc/apache2/sites-available/vhost_redirect_template
 </VirtualHost>
 """
 
-5.2. Create apache vhost for kibana
+# Normal HTTP template
+
+vim /etc/apache2/sites-available/vhost_template
+
+"""
+Directory /srv/virtuals/__VHOST__>
+                AllowOverride None
+                Require all granted
+</Directory>
+
+<VirtualHost *:80>
+  ServerName __VHOST__
+  ServerAdmin webmaster@spin.ee
+  DocumentRoot /srv/virtuals/__VHOST__/html
+
+  <Directory /srv/virtuals/__VHOST__/html/>
+                Options +FollowSymLinks +Multiviews +Indexes
+                AllowOverride None
+                AuthType basic
+                AuthName "private"
+                AuthUserFile /var/secure/.htpasswd
+                Require valid-user
+  </Directory>
+
+  ErrorLog "/srv/virtuals/__VHOST__/log/error.log"
+  CustomLog "/srv/virtuals/__VHOST__/log/access.log" vhost_combined
+  ServerSignature Off
+
+</VirtualHost>
+"""
+
+5.2. Basic authenticaiton
+
+apt-get install apache2-utils
+
+mkdir /var/secure
+
+chown www-data /var/secure/ && chmod 700 /var/secure/
+
+htpasswd -c /var/secure/.htpasswd admin
+
+/etc/init.d/apache2 reload
+
+5.3. Create apache vhost for kibana
+
+# WIP, SSL version does not work because HTTPS kibana cannot reach elasticsearch
 
 export VHOST=kibana.domain.ex
 mkdir -p /srv/virtuals/$VHOST/{html,log}
@@ -210,15 +258,22 @@ mkdir /etc/apache2/$VHOST && openssl req -new -key /etc/apache2/id_rsa.key -out 
 openssl x509 -req -days 1825 -in /etc/apache2/$VHOST/$VHOST.csr -signkey /etc/apache2/id_rsa.key -out /etc/apache2/$VHOST/$VHOST.crt
 
 cp /etc/apache2/sites-available/vhost_ssl_template /etc/apache2/sites-available/$VHOST-ssl.conf
-cp /etc/apache2/sites-available/vhost_redirect_template /etc/apache2/sites-available/$VHOST.conf
+
+# This is how I want to do it, but havent figured out how to do SSL
+# cp /etc/apache2/sites-available/vhost_redirect_template /etc/apache2/sites-available/$VHOST.conf
+
+# So for now lets do it in unsecure way
+cp /etc/apache2/sites-available/vhost_template /etc/apache2/sites-available/$VHOST.conf
+
 sed -i s/__VHOST__/$VHOST/g /etc/apache2/sites-available/$VHOST-ssl.conf
 sed -i s/__VHOST__/$VHOST/g /etc/apache2/sites-available/$VHOST.conf
+
 a2enmod ssl
 a2ensite $VHOST-ssl
 a2ensite $VHOST
 /etc/init.d/apache2 reload
 
-5.3. kibana
+5.4. kibana
 
 apt-get install unzip
 cd /opt
