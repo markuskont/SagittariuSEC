@@ -14,7 +14,7 @@ cd /opt
 
 git pull https://github.com/markuskont/SagittariuSEC
 
-sec --detach --conf=/opt/SagittariuSEC/rules/*.sec --input=/var/log/*.log --syslog=daemon
+sec --detach --conf=/opt/SagittariuSEC/rules/\*.sec --input=/var/log/\*.log --syslog=daemon
 
 Simple ruleset update, custom actions will be preserved
 
