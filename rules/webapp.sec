@@ -63,3 +63,20 @@ ptype=RegExp
 pattern=\S*EXPLOIT_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)$
 desc=$+{remote_IP} | $+{vhost} |  Web application exploit attack
 action=logonly; event ATTACK_FROM_$+{remote_IP}
+
+# Cross correlate DNS enumeration and web application events
+# Long timeframe
+# Untested
+
+type=EventGroup2
+continue=TakeNext
+ptype=RegExp
+pattern=\S*DNS_ENUM_(?<remote_IP>\S+)_\S+
+thresh=1
+continue2=TakeNext
+ptype2=RegExp
+pattern2=\S*_WEBAPP_\S+_(?<remote_IP>\S+)_\S*
+thresh2=10
+desc=$+{remote_IP} | Possible DNS enumeration and web application attacks
+action=logonly; event ATTACK_FROM_$+{remote_IP}
+window=3600
