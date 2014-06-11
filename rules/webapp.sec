@@ -41,19 +41,20 @@ action=logonly; event ATTACK_FROM_$+{remote_IP}
 window=60
 
 # Cross-correlate injections and exploit attempts
+# Useless rule, since exploit attempts already generate attack event
 
-type=EventGroup2
-continue=TakeNext
-ptype=RegExp
-pattern=\S*INJECTION_WEBAPP_(?<server>[\w-]+)_(?<remote_IP>\S+)_\S*
-thresh=5
-continue2=TakeNext
-ptype2=RegExp
-pattern2=\S*EXPLOIT_WEBAPP_(?<server>[\w-]+)_(?<remote_IP>\S+)_\S*
-thresh2=1
-desc=$+{remote_IP} | $+{server} | Combined authentication and web application attacks
-action=logonly; event ATTACK_FROM_$+{remote_IP}
-window=60
+# type=EventGroup2
+# continue=TakeNext
+# ptype=RegExp
+# pattern=\S*INJECTION_WEBAPP_(?<server>[\w-]+)_(?<remote_IP>\S+)_\S*
+# thresh=5
+# continue2=TakeNext
+# ptype2=RegExp
+# pattern2=\S*EXPLOIT_WEBAPP_(?<server>[\w-]+)_(?<remote_IP>\S+)_\S*
+# thresh2=1
+# desc=$+{remote_IP} | $+{server} | Combined authentication and web application attacks
+# action=logonly; event ATTACK_FROM_$+{remote_IP}
+# window=60
 
 # Generate attack from identified webapp exploits
 
