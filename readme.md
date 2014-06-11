@@ -27,7 +27,7 @@ Rules in actions.sec file can be used to block attackers in real time. Some basi
 vim /opt/SagittariuSEC/rules/actions.sec
 
 """
-action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (ssh root@firewall.domain.ex 'bash -s' -- <  /opt/SagittariuSEC/scripts/iptables.sh $1 $+{remote_IP}
+action=logonly; event IP_BLOCKED_$+{remote_IP}; shellcmd (ssh root@firewall.domain.ex 'bash -s' -- <  /opt/SagittariuSEC/scripts/iptables.sh $+{remote_IP}
 """
 
 4\.
