@@ -103,7 +103,7 @@ update-rc.d elasticsearch defaults 95 10
 
 vim /etc/rsyslog.d/elasticsearch.conf
 
-#form http://www.rsyslog.com/guides-for-rsyslog/the-recipies/more-complex-scenarios/
+#from http://www.rsyslog.com/guides-for-rsyslog/the-recipies/more-complex-scenarios/
 
 """
 module(load="imuxsock")             # for listening to /dev/log
