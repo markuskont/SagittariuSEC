@@ -38,7 +38,7 @@ pattern2=\S*AUTH_FAILURE_(?<server>[\w-]+)_(?<remote_IP>\S+)_\w
 thresh2=5
 desc=$+{remote_IP} | $+{server} | Combined authentication and web application attacks
 action=logonly; event ATTACK_FROM_$+{remote_IP}
-window=60
+window=300
 
 # Cross-correlate injections and exploit attempts
 # Useless rule, since exploit attempts already generate attack event
