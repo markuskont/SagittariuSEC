@@ -236,8 +236,6 @@ htpasswd -c /var/secure/.htpasswd admin
 
 5.3. Create apache vhost for kibana
 
-# WIP, SSL version does not work because HTTPS kibana cannot reach elasticsearch
-
 export VHOST=kibana.domain.ex
 mkdir -p /srv/virtuals/$VHOST/{html,log}
 
@@ -269,7 +267,7 @@ wget http://download.elasticsearch.org/kibana/kibana/kibana-latest.zip
 
 mv kibana-latest/* /srv/virtuals/$VHOST/html/ && cd /srv/virtuals/$VHOST/html/
 
-# configure elasticsearch backend by FQDN of elasticsearch host (we configured it on same machine)
+# configure elasticsearch backend
 
 vim src/config.js
 
