@@ -265,6 +265,8 @@ cd /opt
 
 wget http://download.elasticsearch.org/kibana/kibana/kibana-latest.zip
 
+unzip kibana-latest.zip
+
 mv kibana-latest/* /srv/virtuals/$VHOST/html/ && cd /srv/virtuals/$VHOST/html/
 
 # configure elasticsearch backend
