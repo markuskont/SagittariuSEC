@@ -142,10 +142,8 @@ action(type="omelasticsearch"
 
 5. Set up kibana3
 
+5.1. Set up apache vhost template 
 
-5.1. Set up apache vhost templates
-
-# WIP
 # Install apache web server
 
 apt-get install apache2
@@ -156,76 +154,72 @@ service apache2 reload
 vim /etc/apache2/sites-available/vhost_ssl_template
 
 """
-<Directory /srv/virtuals/__VHOST__>
-                AllowOverride None
-	Require all granted
-</Directory>
+<VirtualHost *:80>
+        ServerName __VHOST__
+        RewriteEngine On
+        RewriteCond %{HTTPS} off
+        RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI}
+</VirtualHost>
 
 <VirtualHost *:443>
-  ServerName __VHOST__
-  ServerAdmin webmaster@domain.ex
-  DocumentRoot /srv/virtuals/__VHOST__/html/
+        ServerName __VHOST__
 
-  <Directory /srv/virtuals/__VHOST__/html/>
-                Options +FollowSymLinks +Multiviews +Indexes
-                AllowOverride None
-                AuthType basic
-                AuthName "private"
-                AuthUserFile /var/secure/.htpasswd
-                Require valid-user
-  </Directory>
+        SSLEngine on
+        SSLCertificateFile /etc/apache2/__VHOST__/__VHOST__.crt
+        SSLCertificateKeyFile /etc/apache2/id_rsa.key
 
-  SSLEngine on
-  SSLCertificateFile /etc/apache2/__VHOST__/__VHOST__.crt
-  #SSLCertificateKeyFile /etc/apache2/__VHOST__/__VHOST__.key
-  SSLCertificateKeyFile /etc/apache2/id_rsa.key
-
-  ErrorLog "/srv/virtuals/__VHOST__/log/ssl-error.log"
-  CustomLog "/srv/virtuals/__VHOST__/log/ssl-access.log" vhost_combined
-  ServerSignature Off
-
-</VirtualHost>
-"""
-
-# Redirect HTTP traffic to HTTPS
-vim /etc/apache2/sites-available/vhost_redirect_template
-
-"""
-<VirtualHost *:80>
-  ServerName __VHOST__
-  Redirect permanent / https://__VHOST__
-</VirtualHost>
-"""
-
-# Normal HTTP template
-
-vim /etc/apache2/sites-available/vhost_template
-
-"""
-Directory /srv/virtuals/__VHOST__>
-                AllowOverride None
+        DocumentRoot /srv/virtuals/__VHOST__/html/
+        <Directory /srv/virtuals/__VHOST__/html/>
                 Require all granted
-</Directory>
+                Options -Multiviews
+        </Directory>
 
-<VirtualHost *:80>
-  ServerName __VHOST__
-  ServerAdmin webmaster@spin.ee
-  DocumentRoot /srv/virtuals/__VHOST__/html
+        LogLevel debug
+        ErrorLog /srv/virtuals/__VHOST__/log/error.log
+        CustomLog /srv/virtuals/__VHOST__/access.log vhost_combined
 
-  <Directory /srv/virtuals/__VHOST__/html/>
-                Options +FollowSymLinks +Multiviews +Indexes
-                AllowOverride None
+        # Set global proxy timeouts
+        <Proxy http://127.0.0.1:9200>
+                ProxySet connectiontimeout=5 timeout=90
+        </Proxy>
+
+        # Proxy for _aliases and .*/_search
+        <LocationMatch "^/(_nodes|_aliases|.*/_aliases|_search|.*/_search|_mapping|.*/_mapping)$">
+                ProxyPassMatch http://127.0.0.1:9200/$1
+                ProxyPassReverse http://127.0.0.1:9200/$1
+        </LocationMatch>
+
+        # Proxy for kibana-int/{dashboard,temp} stuff (if you don't want auth on /, then you will want these to be protected)
+        <LocationMatch "^/(kibana-int/dashboard/|kibana-int/temp)(.*)$">
+                ProxyPassMatch http://127.0.0.1:9200/$1$2
+                ProxyPassReverse http://127.0.0.1:9200/$1$2
+        </LocationMatch>
+
+        <location />
                 AuthType basic
                 AuthName "private"
                 AuthUserFile /var/secure/.htpasswd
                 Require valid-user
-  </Directory>
+        </location>
 
-  ErrorLog "/srv/virtuals/__VHOST__/log/error.log"
-  CustomLog "/srv/virtuals/__VHOST__/log/access.log" vhost_combined
-  ServerSignature Off
+#       # Optional disable auth for a src IP (eg: your monitoring host or subnet)
+#       # Apache 2.2 syntax
+#       <Location />
+#               Allow from 5.6.7.8
+#               Deny from all
+#               Satisfy any
+#
+#               AuthLDAPBindDN "CN=_ldapbinduser,OU=Users,DC=example,DC=com"
+#               AuthLDAPBindPassword "ldapbindpass"
+#               AuthLDAPURL "ldaps://ldap01.example.com ldap02.example.com/OU=Users,DC=example,DC=com?sAMAccountName?sub?(objectClass=*)"
+#               AuthType Basic
+#               AuthBasicProvider ldap
+#               AuthName "Please authenticate for Example dot com"
+#               AuthLDAPGroupAttributeIsDN on
+#               require valid-user
+#       </Location>
 
-</VirtualHost>
+</vhost>
 """
 
 5.2. Basic authenticaiton
@@ -259,18 +253,11 @@ openssl x509 -req -days 1825 -in /etc/apache2/$VHOST/$VHOST.csr -signkey /etc/ap
 
 cp /etc/apache2/sites-available/vhost_ssl_template /etc/apache2/sites-available/$VHOST-ssl.conf
 
-# This is how I want to do it, but havent figured out how to do SSL
-# cp /etc/apache2/sites-available/vhost_redirect_template /etc/apache2/sites-available/$VHOST.conf
-
-# So for now lets do it in unsecure way
-cp /etc/apache2/sites-available/vhost_template /etc/apache2/sites-available/$VHOST.conf
-
 sed -i s/__VHOST__/$VHOST/g /etc/apache2/sites-available/$VHOST-ssl.conf
-sed -i s/__VHOST__/$VHOST/g /etc/apache2/sites-available/$VHOST.conf
 
-a2enmod ssl
-a2ensite $VHOST-ssl
-a2ensite $VHOST
+a2enmod ssl rewrite
+a2ensite $VHOST-ssl.conf
+
 /etc/init.d/apache2 reload
 
 5.4. kibana
@@ -288,6 +275,6 @@ vim src/config.js
 
 """
 ...
-elasticsearch: "http://kibana.domain.ex:9200",
+elasticsearch: "https://"+window.location.hostname+":443",
 ...
 """
