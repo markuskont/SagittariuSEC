@@ -63,7 +63,7 @@ pattern=AUTH_MULTIPLE_FAILURES_(?<server>[\w-]+)_(?<remote_IP>\S+)$
 continue=TakeNext
 desc=$+{remote_IP} | $+{server} | Multiple authentication failures from IP, repeat offender
 action=logonly; event ATTACK_FROM_$+{remote_IP}
-thresh=3
+thresh=10
 window=900
 
 # Lateral SSHD scan from botnet node
