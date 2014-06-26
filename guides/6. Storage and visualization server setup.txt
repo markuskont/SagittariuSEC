@@ -99,6 +99,8 @@ update-rc.d elasticsearch defaults 95 10
 # start server
 /etc/init.d/elasticsearch start
 
+# https://www.digitalocean.com/community/tutorials/how-to-use-logstash-and-kibana-to-centralize-and-visualize-logs-on-ubuntu-14-04
+
 4. Configure rsyslog to forward logs to elasticsearch
 
 vim /etc/rsyslog.d/elasticsearch.conf

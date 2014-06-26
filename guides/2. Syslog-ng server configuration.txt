@@ -100,7 +100,7 @@ log {
 4. Create directory for log collection
 
 mkdir -p /var/log/server/daemon
-chwon -R syslog /var/log/server
+chown -R syslog /var/log/server
 
 5. Restart syslog daemon for changes to take effect
 
