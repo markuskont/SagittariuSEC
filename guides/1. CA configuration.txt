@@ -44,6 +44,11 @@ openssl req -new -x509 -days 3650 -extensions v3_ca \
 -keyout private/cakey.pem -out cacert.pem \
 -config /etc/ssl/openssl.cnf
 
+#remove passphrase from ca key if you wish to do so (pretty much a must if you want to do batch certificate generation)
+#Beware that this is less secure
+
+mv ./private/cakey.pem ./private/cakey.pem.secure && openssl rsa -in ./private/cakey.pem.secure -out ./private/cakey.pem
+
 chmod 0400 ./private/cakey.pem
 
 4. Create the following script for client certificate generation
@@ -70,7 +75,7 @@ validate_input () {
 
                 echo 'Invalid input'
 
-        else     
+        else
 
                 echo "Copy this to Common Name:"
                 echo ----------------
@@ -108,7 +113,10 @@ gen_and_sign () {
 
 }
 
-validate_input $ARG
+for ARG in "$@"
+do
+        validate_input $ARG
+done
 """
 
 #make the script executable
