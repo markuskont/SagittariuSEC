@@ -84,7 +84,7 @@ source src {
 """
 destination d_sagittarius {
         syslog(
-                sagittarius.keskus.sise
+                sagittarius.domain.ex
                 transport("tls")
                 port(6514)
                 tls( peer-verify(required-trusted) ca_dir('/etc/ssl/syslog/') key_file('/etc/ssl/syslog/key.pem') cert_file('/etc/ssl/syslog/cert.pem'))
