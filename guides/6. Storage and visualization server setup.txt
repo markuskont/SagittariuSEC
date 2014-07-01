@@ -12,7 +12,63 @@ Please change domain.ex with your own domain name. Same goes for server names.
 # Create certificates 
 # Ref. Guide 3. (Server side points 1. and 2.)
 
-2. Set up Rsyslog 8 log collector
+
+2. Forward all logs from relay syslog-ng to storage server
+
+# On relay server
+
+vim /etc/syslog-ng/syslog-ng.conf
+
+"""
+...
+destination d_kibana_server {
+        syslog(
+                kibana.domain.ex
+                transport("tls")
+                port(6514)
+                tls( peer-verify(required-trusted) ca_dir('/etc/ssl/syslog/') key_file('/etc/ssl/syslog/orion.domain.ex-key.pem') cert_file('/etc/ssl/syslog/orion.domain.ex-cert.pem'))
+        );
+};
+...
+log {
+        source(s_remote_ietf);
+        source(s_src);
+        destination(d_local);
+        destination(d_kibana_server);
+};
+...
+"""
+
+service syslog-ng restart
+
+3. Set up elasticsearch server
+
+apt-get install openjdk-7-jre-headless -y
+
+# Variant 1 - manual download (skip to Variant 2)
+cd /opt/
+export elastic_version=elasticsearch-1.2.0.deb
+wget https://download.elasticsearch.org/elasticsearch/elasticsearch/$elastic_version
+dpkg -i $elastic_version
+
+# Variant 2 - repo
+
+wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | apt-key add -
+echo 'deb http://packages.elasticsearch.org/elasticsearch/1.1/debian stable main' | tee /etc/apt/sources.list.d/elasticsearch.list
+apt-get update
+apt-get install elasticsearch=1.1.1
+
+# add to startup
+update-rc.d elasticsearch defaults 95 10
+
+# start server
+/etc/init.d/elasticsearch start
+
+# https://www.digitalocean.com/community/tutorials/how-to-use-logstash-and-kibana-to-centralize-and-visualize-logs-on-ubuntu-14-04
+
+4. Configure log forwarder (eighter Rsyslog or Logstash, not both)
+
+4.1. Rsyslog
 
 # We use rsyslog 8 ppa, since earlier version does not provide elasticsearch plugin
 # You can compile by hand but I consider this approach cruel and unusual punishment for any sysadmin
@@ -55,54 +111,6 @@ sed -i s/domain\.ex/$domain_name/g /etc/rsyslog.d/remote.conf
 
 service rsyslog restart
 
-2.1. Forward all logs from central syslog-ng server to rsyslog-elasticsearch server
-
-# On central server
-
-vim /etc/syslog-ng/syslog-ng.conf
-
-"""
-...
-destination d_kibana_server {
-        syslog(
-                kibana.domain.ex
-                transport("tls")
-                port(6514)
-                tls( peer-verify(required-trusted) ca_dir('/etc/ssl/syslog/') key_file('/etc/ssl/syslog/orion.domain.ex-key.pem') cert_file('/etc/ssl/syslog/orion.domain.ex-cert.pem'))
-        );
-};
-...
-log {
-        source(s_remote_ietf);
-        source(s_src);
-        destination(d_local);
-        destination(d_kibana_server);
-};
-...
-"""
-
-service syslog-ng restart
-
-3. Set up elasticsearch server
-
-apt-get install openjdk-7-jre-headless -y
-
-# Download elasticsearch installer
-cd /opt/
-export elastic_version=elasticsearch-1.2.0.deb
-wget https://download.elasticsearch.org/elasticsearch/elasticsearch/$elastic_version
-dpkg -i $elastic_version
-
-# add to startup
-update-rc.d elasticsearch defaults 95 10
-
-# start server
-/etc/init.d/elasticsearch start
-
-# https://www.digitalocean.com/community/tutorials/how-to-use-logstash-and-kibana-to-centralize-and-visualize-logs-on-ubuntu-14-04
-
-4. Configure rsyslog to forward logs to elasticsearch
-
 vim /etc/rsyslog.d/elasticsearch.conf
 
 #from http://www.rsyslog.com/guides-for-rsyslog/the-recipies/more-complex-scenarios/
@@ -141,6 +149,45 @@ action(type="omelasticsearch"
 """
 
 /etc/init.d/rsyslog restart
+
+4.2. Logstash
+
+#Install the packages
+echo 'deb http://packages.elasticsearch.org/logstash/1.4/debian stable main' |  tee /etc/apt/sources.list.d/logstash.list
+apt-get update
+apt-get install logstash
+
+#Configure logstash listener
+
+vim /etc/logstash/conf.d/10-syslog.conf
+
+"""
+input {
+  syslog {
+    host => 127.0.0.1 # string (optional), default: "0.0.0.0"
+    port => 514 # number (optional), default: 514
+  }
+}
+
+filter {
+  if [type] == "syslog" {
+    grok {
+      match => { "message" => "%{SYSLOGTIMESTAMP:syslog_timestamp} %{SYSLOGHOST:syslog_hostname} %{DATA:syslog_program}(?:\[%{POSINT:syslog_pid}\])?: %{GREEDYDATA:syslog_message}" }
+      add_field => [ "received_at", "%{@timestamp}" ]
+      add_field => [ "received_from", "%{host}" ]
+    }
+    syslog_pri { }
+    date {
+      match => [ "syslog_timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss" ]
+    }
+  }
+}
+
+output {
+  elasticsearch { host => localhost }
+  stdout { codec => rubydebug }
+}
+"""
 
 5. Set up kibana3
 
@@ -273,7 +320,7 @@ mv kibana-latest/* /srv/virtuals/$VHOST/html/ && cd /srv/virtuals/$VHOST/html/
 
 # configure elasticsearch backend
 
-vim src/config.js
+vim config.js
 
 """
 ...
