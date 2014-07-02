@@ -15,6 +15,8 @@ Please change domain.ex with your own domain name. Same goes for server names.
 
 2. Forward all logs from relay syslog-ng to storage server
 
+# In case you plan to configure this on separate box
+# I did this in testing, but live is configured directly on top of existing server (the one that was configured in Guide 3.)
 # On relay server
 
 vim /etc/syslog-ng/syslog-ng.conf
@@ -68,7 +70,7 @@ update-rc.d elasticsearch defaults 95 10
 
 4. Configure log forwarder (eighter Rsyslog or Logstash, not both)
 
-4.1. Rsyslog
+4.1. Rsyslog (IGNORE THIS)
 
 # NOTE - This is informative, my solution is configured using a logstash file input with grok filters
 # We use rsyslog 8 ppa, since earlier version does not provide elasticsearch plugin
@@ -151,7 +153,7 @@ action(type="omelasticsearch"
 
 /etc/init.d/rsyslog restart
 
-4.2. Logstash
+4.2. Logstash (USE THIS)
 
 #Install the packages
 echo 'deb http://packages.elasticsearch.org/logstash/1.4/debian stable main' |  tee /etc/apt/sources.list.d/logstash.list
