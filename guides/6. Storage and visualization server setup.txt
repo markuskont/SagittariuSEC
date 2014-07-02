@@ -385,3 +385,13 @@ vim /etc/iptables.conf
 COMMIT
 # Completed on Fri Mar  7 10:28:40 2014
 """
+
+#Add iptables rules to network startup (under primary network interface)
+
+vim /etc/network/interfaces
+
+"""
+...
+pre-up iptables-restore < /etc/iptables.conf
+...
+"""
