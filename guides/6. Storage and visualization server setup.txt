@@ -10,6 +10,8 @@ Please change domain.ex with your own domain name. Same goes for server names.
 1. Set up certificates
 
 # Create certificates 
+# In case you plan to configure this on separate box
+# I did this in testing, but live is configured directly on top of existing server (the one that was configured in Guide 3.)
 # Ref. Guide 3. (Server side points 1. and 2.)
 
 
@@ -58,7 +60,7 @@ dpkg -i $elastic_version
 wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | apt-key add -
 echo 'deb http://packages.elasticsearch.org/elasticsearch/1.1/debian stable main' | tee /etc/apt/sources.list.d/elasticsearch.list
 apt-get update
-apt-get install elasticsearch=1.1.1
+apt-get install elasticsearch
 
 # add to startup
 update-rc.d elasticsearch defaults 95 10
@@ -163,7 +165,9 @@ apt-get install logstash
 #Configure logstash
 #Firstly, create a pattern for apache vhost_combined access logs
 
-/etc/logstash/patterns/apache.pattern
+mkdir /etc/logstash/patterns/
+
+vim /etc/logstash/patterns/apache.pattern
 
 """
 VHOSTCOMMONAPACHELOG %{IPORHOST:http_vhost}:?%{IPORHOST:http_port}? %{IPORHOST:http_clientip} %{USER:http_ident} %{USER:http_auth} \[%{HTTPDATE:http_timestamp}\] "(?:%{WORD:http_method} %{NOTSPACE:http_request}(?: HTTP/%{NUMBER:http_version})?|%{DATA:http_rawrequest})" %{NUMBER:http_response} (?:%{NUMBER:http_bytes}|-) "%{DATA:http_referer}" "%{DATA:http_useragent}"
@@ -208,6 +212,7 @@ filter {
                 geoip {
                         add_tag => [ "GeoIP" ]
                         source => "http_clientip"
+                        database => "/opt/map/GeoLiteCity.dat"
                 }
         }
         date {
@@ -220,6 +225,18 @@ output {
         stdout { codec => rubydebug }
 }
 """
+
+4.2.1. Set up geoip database
+
+# Logstash already uses GeoLiteCity database
+# But it gets updated monthly, not sure about bundled version
+# so we configure our own database
+
+mkdir /opt/map/ && cd /opt/map
+
+wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz && gunzip GeoLiteCity.dat.gz
+
+# TODO: periodic update script (scheduled in cron)
 
 5. Set up kibana3
 
