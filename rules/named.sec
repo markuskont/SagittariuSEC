@@ -6,11 +6,12 @@ procallin=no
 # TODO: forward to iptables script
 # Do not block IP, only limit packet rate to port 53
 
-type=Single
+type=SingleWithSuppress
 ptype=RegExp
 pattern=client (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+?(?:view authoritative: query: (?<domain>[\w\d\.]+) IN ANY \+E)
 desc=$+{remote_IP} | $+{domain} | Possible DNS amplification attack
 action=logonly; event DNS_AMP_ATTACK_$+{remote_IP}
+window=1
 
 # DNS enumeration
 # Apr 22 11:07:06 ns3 named[29809]: security: error: client <REMOTE_IP>#43836: view authoritative: zone transfer '<DNS_ZONE>/AXFR/IN' denied
