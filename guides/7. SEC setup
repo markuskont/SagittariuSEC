@@ -9,11 +9,13 @@ wget -O sec.tar.gz http://downloads.sourceforge.net/project/simple-evcorr/sec/2.
 
 tar -xzf sec.tar.gz
 
+cp sec /usr/sbin/
+
 2. SEC init script
 
 # This script is far from perfect, but shoud do the trick
 # I modified it from the one that was provided with debian repo install
-# My script makes use of 
+# My script makes use of --pid and --detach options provided by SEC
 
 vim /etc/init.d/sec
 
@@ -138,6 +140,8 @@ case "$1" in
         ;;
 esac
 """
+
+chmod 755 /etc/init.d/sec
 
 #Add SEC to startup
 
