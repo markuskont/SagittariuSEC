@@ -63,26 +63,17 @@ DAEMON_ARGS="--detach --pid=$PIDFILE --conf=/opt/SagittariuSEC/rules/*.sec --inp
 #
 do_start()
 {
-        # Return
-        #   0 if daemon has been started
-        #   1 if daemon was already running
-        #   2 if daemon could not be started
-        pgrep $NAME > /dev/null \
-                || return 1
-        $DAEMON $DAEMON_ARGS > /dev/null \
-                || return 2
-        # Add code here, if necessary, that waits for the process to be ready
-        # to handle requests from services started subsequently which depend
-        # on this one.  As a last resort, sleep for some time.
+		if [ -f $PIDFILE] ; then
+			echo "process exists"
+		else
+			 $DAEMON $DAEMON_ARGS > /dev/null \
+					|| return 2
+		fi
+
 }
 
 do_stop()
 {
-        # Return
-        #   0 if daemon has been stopped
-        #   1 if daemon was already stopped
-        #   2 if daemon could not be stopped
-        #   other if a failure occurred
         if [ -f $PIDFILE] ; then
         	echo "killing process"
         	cat $PIDFILE | xargs kill
