@@ -63,7 +63,7 @@ DAEMON_ARGS="--detach --pid=$PIDFILE --conf=/opt/SagittariuSEC/rules/*.sec --inp
 #
 do_start()
 {
-		if [ -f $PIDFILE] ; then
+		if [ -f $PIDFILE ] ; then
 			echo "process exists"
 		else
 			 $DAEMON $DAEMON_ARGS > /dev/null \
@@ -74,7 +74,7 @@ do_start()
 
 do_stop()
 {
-        if [ -f $PIDFILE] ; then
+        if [ -f $PIDFILE ] ; then
         	echo "killing process"
         	cat $PIDFILE | xargs kill
         	RETVAL="$?"
