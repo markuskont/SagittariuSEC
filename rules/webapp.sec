@@ -7,8 +7,8 @@ ptype=RegExp
 pattern=\S*INJECTION_WEBAPP_\S+_(?<remote_IP>\S+)_(?<vhost>\S*)$
 desc=$+{remote_IP} | $+{vhost} |  Burst web application attack
 action=logonly; event ATTACK_FROM_$+{remote_IP}
-thresh=20
-window=10
+thresh=5
+window=2
 
 # Single IP attempts 3 distinct injection types in 5 minute timeframe
 # Might catch manual hacking attempts
