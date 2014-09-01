@@ -12,20 +12,19 @@ action=logonly; event DNS_AMP_ATTACK_$+{remote_IP}_$+{domain}
 window=5
 thresh=3
 
-# Regex to find denied queries (no need to block if recursion is disabled)
-# \((?<domain>[\w\d\.]+)\): view authoritative: query \(cache\).+denied
-# client (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+?\((?<domain>[\w\d\.]+)\): view authoritative: query \(cache\).+denied
-# client (?<remote_IP>(?:\d{1,3}\.){3}\d{1,3}).+?\($+{domain}\): view authoritative: query \(cache\).+denied
+# Server still logs queries, even if they are denied
+# If denied log entry is observed then IP will not be blocked (there simply is no point)
 
 type=PairWithWindow
 ptype=RegExp
 pattern=DNS_AMP_ATTACK_(?<remote_IP>(?:\d{1,3}\.){3}\d{1,3})_(?<domain>[\w\d\.]+)
 desc=$+{remote_IP} | $+{domain} | Possible DNS amplification attack
 action=logonly; event ATTACK_FROM_$+{remote_IP}
+ptype2=RegExp
 pattern2=client $+{remote_IP}.+?\($+{domain}\): view authoritative: query \(cache\).+denied
 desc2=$+{remote_IP} | $+{domain} | Denied DNS amplification attack
 action2=logonly
-window=2
+window=5
 
 # DNS enumeration
 # Apr 22 11:07:06 ns3 named[29809]: security: error: client <REMOTE_IP>#43836: view authoritative: zone transfer '<DNS_ZONE>/AXFR/IN' denied
