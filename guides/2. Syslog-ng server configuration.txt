@@ -63,7 +63,7 @@ source s_remote_ietf {
 #for legacy servers with no RFC5424 support
 #only use in physically separated networks or over VPN channel
 source s_remote_bsd {
-        tcp(
+        syslog(
                 ip(192.168.66.183)
                 port(514)
                 keep_hostname(yes)
