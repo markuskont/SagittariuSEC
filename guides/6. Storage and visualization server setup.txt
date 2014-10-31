@@ -274,7 +274,7 @@ vim /etc/apache2/sites-available/vhost_ssl_template
 
         LogLevel debug
         ErrorLog /srv/virtuals/__VHOST__/log/error.log
-        CustomLog /srv/virtuals/__VHOST__/access.log vhost_combined
+        CustomLog /srv/virtuals/__VHOST__/log/access.log vhost_combined
 
         # Set global proxy timeouts
         <Proxy http://127.0.0.1:9200>
