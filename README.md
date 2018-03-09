@@ -1,4 +1,4 @@
-# sagittariusSEC
+# SagittariuSEC
 
 This repository is stale and only serves as public archive for my master thesis. However, rules developed for the thesis serve as a base for frankenstack correlator. Please see [this repo](https://github.com/ccdcoe/frankenSEC) for more up-to-date version of the rules.
 
